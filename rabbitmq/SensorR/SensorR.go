@@ -48,6 +48,7 @@ func main() {
 		false, false, nil)
 	shared.CheckError(err)
 
+	// TODO: Colocar na fila antes
 	// enviar
 	go func() {
 		for {
@@ -62,7 +63,7 @@ func main() {
 			shared.CheckError(err)
 
 			// Garantir taxa máxima
-			time.Sleep(10 * time.Second)
+			time.Sleep(shared.REAL_TIME)
 
 		}
 	}()
