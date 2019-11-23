@@ -34,7 +34,7 @@ func (manager QueueManager) QueueMsg(msg message.Message) {
 	msgHeader := msg.Header
 
 	queue := manager.queueMap[msgHeader.Destination]
-	queue.msgList.Append(msg)
+	queue.msgList = append(queue.msgList, msg)
 	queue.length = len(queue.msgList)
 }
 

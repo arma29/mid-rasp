@@ -1,62 +1,64 @@
 package queueServer
 
 type Subscriber struct {
-	host string
-	port int
-	queuesSubscribed map[string]bool
+	Host string
+	Port int
+	QueuesSubscribed map[string]bool
 }
 
 type SubscriberManager struct {
-	subList []Subscriber
+	SubList []Subscriber
 }
 
 // Subscribe to destination queue
 func (subManager SubscriberManager) SubscribeRequest(host string, port int, destination string) {
 
-	if subManager.subList == nil {
-		subManager.subList = make([]Subscriber)
+	if subManager.SubList == nil {
+		subManager.SubList = make([]Subscriber, 1)
 	}
 
 	// Get or Create Subscriber
-	subscriber := subManager.getSubscriber(host, port)
+	subscriber, exists := subManager.getSubscriber(host, port)
 
-	if subscriber == nil {
-		subscriber = Subscriber{host: host, port: port, queuesSubscribed: make(map[string]bool)}
-		subManager.subList.append(subscriber)
+	if !exists {
+		subscriber = Subscriber{Host: host, Port: port, QueuesSubscribed: make(map[string]bool)}
+		subManager.SubList = append(subManager.SubList, subscriber)
 	}
 
 	// Subscribe
-	subscriber.queuesSubscribed[destination] = true
+	subscriber.QueuesSubscribed[destination] = true
 	
 } 
 
 // Subscribe to destination queue
 func (subManager SubscriberManager) UnsubscribeRequest(host string, port int, destination string) {
 
-	if subManager.subList == nil {
+	if subManager.SubList == nil {
 		return 
 	}
 
 	// Get or Create Subscriber
-	subscriber := subManager.getSubscriber(host, port)
+	subscriber, exists := subManager.getSubscriber(host, port)
 
-	if subscriber == nil {
+	if !exists{
 		return
 	}
 
 	// Remove destination string from subscribe list
-	subscriber.queuesSubscribed[destination] = false	
+	subscriber.QueuesSubscribed[destination] = false	
 } 
 
-func (subManager SubscriberManager) getSubscriber(host string, port int) {
+func (subManager SubscriberManager) getSubscriber(host string, port int) (Subscriber, bool) {
 
-	subscriber := nil
+	var subscriber Subscriber
+	exists := false
 
-	for _, sub := range subManager.subList {
-		if (sub.host == host && sub.port == port) {
+	for _, sub := range subManager.SubList {
+		if (sub.Host == host && sub.Port == port) {
 			subscriber = sub
+			exists = true
 		}
 	}
 
-	return subscriber
-}
+	return subscriber, exists
+}	

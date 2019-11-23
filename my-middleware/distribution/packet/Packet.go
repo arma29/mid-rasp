@@ -5,17 +5,14 @@ import (
 )
 
 type Packet struct {
-
 	Header PacketHeader;
 	Body PacketBody
 }
 
 type PacketHeader struct {
-
 	Operation string;
 }
 
 type PacketBody struct {
-
 	Message message.Message;
 }

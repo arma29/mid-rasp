@@ -4,44 +4,46 @@ import (
 )
 
 type Publisher struct {
-	host string
-	port int
-	publishQueues map[string]bool
+	Host string
+	Port int
+	PublishQueues map[string]bool
 }
 
 type PublisherManager struct {
-	pubList []Publisher
+	PubList []Publisher
 }
 
 // Mark a host as a publisher
 func (pubManager PublisherManager) PublishRequest(host string, port int, destination string) {
 
-	if pubManager.pubList == nil {
-		pubManager.pubList = make([]Publisher)
+	if pubManager.PubList == nil {
+		pubManager.PubList = make([]Publisher, 0)
 	}
 
 	// Get or Create Publisher
-	publisher := pubManager.getPublisher(host, port)
+	publisher, exists := pubManager.GetPublisher(host, port)
 
-	if publisher == nil {
-		publisher = Publisher{host: host, port: port, queuesSubscribed: {destination}}
-		pubManager.pubList.append(publisher)
+	if !exists {
+		publisher = Publisher{Host: host, Port: port, PublishQueues: make(map[string]bool)}
+		pubManager.PubList = append(pubManager.PubList, publisher)
 	}
 
 	// Grant publishing permission
-	Publisher.publishQueues[destination] = true
+	publisher.PublishQueues[destination] = true
 } 
 
 
-func (pubManager PublisherManager) getPublisher(host string, port int) {
+func (pubManager PublisherManager) GetPublisher(host string, port int) (Publisher, bool) {
 
-	publisher := nil
+	var publisher Publisher
+	exists := false
 
-	for _, pub := range pubManager.pubList {
-		if (pub.host == host && pub.port == port) {
+	for _, pub := range pubManager.PubList {
+		if (pub.Host == host && pub.Port == port) {
 			publisher = pub
+			exists = true
 		}
 	}
 
-	return publisher
+	return publisher, exists
 }
