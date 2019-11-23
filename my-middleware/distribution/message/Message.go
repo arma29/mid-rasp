@@ -6,18 +6,18 @@ import (
 
 type Message struct {
 
-	header MessageHeader;
-	body MessageBody;
+	Header MessageHeader;
+	Body MessageBody;
 }
 
 
 type MessageHeader struct {
 
-	destination string;
-	subject string;
-	author string;
-	priority int;
-	expirationDate time.Duration;
+	Destination string;
+	Enterprise string;
+	SensorID string;
+	Priority int;
+	ExpirationDate time.Duration;
 }
 
 

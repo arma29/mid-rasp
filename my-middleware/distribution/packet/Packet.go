@@ -1,22 +1,21 @@
 package packet
 
 import (
-	"../message"
+	"github.com/arma29/mid-rasp/my-middleware/distribution/message"
 )
 
 type Packet struct {
 
-	header PacketHeader;
-	body PacketBody
+	Header PacketHeader;
+	Body PacketBody
 }
 
 type PacketHeader struct {
 
-	operation string;
+	Operation string;
 }
 
 type PacketBody struct {
 
-	packetContent interface{};
-	message message.Message;
+	Message message.Message;
 }

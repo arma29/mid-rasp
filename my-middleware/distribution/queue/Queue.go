@@ -1,11 +1,10 @@
 package queue
 
 import (
-	"../packet"
+	"github.com/arma29/mid-rasp/my-middleware/distribution/message"
 )
 
 type Queue struct {
-
 	length int
-	items []packet.Packet
+	msgList []message.Message
 }

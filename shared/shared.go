@@ -8,6 +8,9 @@ import (
 const SAMPLE_SIZE = 10000 // Warm-up: 30% , Post: 10%
 const RABBITMQ_PORT = 5672
 
+const QUEUE_SERVER_HOST = "localhost"
+const QUEUE_SERVER_PORT = 7574
+
 func CheckError(err error) {
 	if err != nil {
 		fmt.Println("Fatal error: ", err.Error())
