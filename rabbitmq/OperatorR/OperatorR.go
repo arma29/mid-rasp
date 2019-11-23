@@ -61,7 +61,7 @@ func main() {
 
 			// Medindo o tempo
 			t1 := time.Now().UnixNano()
-			t2 := msgRequest.Timesatmp
+			t2 := msgRequest.Timestamp
 			s := fmt.Sprintf("%d", t1-t2)
 			fmt.Println(s)
 

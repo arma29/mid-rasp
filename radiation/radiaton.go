@@ -8,7 +8,7 @@ import (
 // Radiation is
 type Radiation struct {
 	Value     float32
-	Timesatmp int64 //nanosegundos
+	Timestamp int64 //nanosegundos
 }
 
 // Validator is
