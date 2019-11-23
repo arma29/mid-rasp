@@ -1,12 +1,17 @@
 package sensorqueue
 
-const MAX_QUEUE_SIZE = 100
+import (
+	rad "github.com/arma29/mid-rasp/radiation"
+)
 
-var queue []float32
+// maxQueueSize represents the max length of queue
+const maxQueueSize = 100
+
+var queue []rad.Radiation
 
 // InitQueue is
 func InitQueue() {
-	queue = make([]float32, 0)
+	queue = make([]rad.Radiation, 0)
 }
 
 // Empty is
@@ -15,8 +20,8 @@ func Empty() bool {
 }
 
 // Enqueue is
-func Enqueue(e float32) {
-	if len(queue) >= MAX_QUEUE_SIZE {
+func Enqueue(e rad.Radiation) {
+	if len(queue) >= maxQueueSize {
 		return
 	}
 	queue = append(queue, e)
@@ -27,7 +32,7 @@ func Dequeue() {
 	if Empty() {
 		return
 	}
-	queue[0] = 0
+	queue[0] = rad.Radiation{}
 	queue = queue[1:]
 }
 

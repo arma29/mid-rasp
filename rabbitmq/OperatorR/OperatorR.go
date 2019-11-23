@@ -1,75 +1,87 @@
-package operatorR
+package operatorr
 
-// import (
-// 	"github.com/streadway/amqp"
-// 	"encoding/json"
-// 	"fmt"
-// 	"os"
-// 	"strconv"
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strconv"
+	"time"
 
-// 	"github.com/arma29/mid-rasp/shared"
-// 	"github.com/arma29/mid-rasp-perf/application"
-// )
+	rad "github.com/arma29/mid-rasp/radiation"
 
-// func main() {
+	"github.com/streadway/amqp"
 
-// 	// Get Argument from command Line
-// 	if len(os.Args) != 2 {
-// 		fmt.Printf("Missing arguments: %s number\n", os.Args[0])
-// 		os.Exit(1)
-// 	}
-// 	ipContainer := os.Args[1]
+	"github.com/arma29/mid-rasp/shared"
+)
 
-// 	conn, err := amqp.Dial("amqp://guest:guest@" + 
-// 		ipContainer + ":" + 
-// 		strconv.Itoa(shared.RABBITMQ_PORT) +"/")
-// 	shared.CheckError(err)
-// 	defer conn.Close()
+func main() {
 
-// 	ch, err := conn.Channel()
-// 	shared.CheckError(err)
-// 	defer ch.Close()
+	// Get Argument from command Line
+	if len(os.Args) != 2 {
+		fmt.Printf("Missing arguments: %s number\n", os.Args[0])
+		os.Exit(1)
+	}
+	ipContainer := os.Args[1]
 
-// 	// declaração de filas , cria se não existir
-// 	requestQueue, err := ch.QueueDeclare( // mesma fila de envio
-// 		"request", false, false, false, false, nil, )
-// 	shared.CheckError(err)
+	conn, err := amqp.Dial("amqp://guest:guest@" +
+		ipContainer + ":" +
+		strconv.Itoa(shared.RABBITMQ_PORT) + "/")
+	shared.CheckError(err)
+	defer conn.Close()
 
-// 	replyQueue, err := ch.QueueDeclare( // mesma fila de respostas
-// 		"response", false, false, false, false, nil, )
-// 	shared.CheckError(err)
+	ch, err := conn.Channel()
+	shared.CheckError(err)
+	defer ch.Close()
 
-// 	// prepara o recebimento de mensagens do cliente
-// 	msgsFromClient, err := ch.Consume(requestQueue.Name, "", true, false,
-// 		false, false, nil, )
-// 	shared.CheckError(err)
+	// declaração de filas , cria se não existir
+	requestQueue, err := ch.QueueDeclare( // mesma fila de envio
+		"request", false, false, false, false, nil)
+	shared.CheckError(err)
 
-// 	fmt.Println("Servidor pronto...")
+	replyQueue, err := ch.QueueDeclare( // mesma fila de respostas
+		"response", false, false, false, false, nil)
+	shared.CheckError(err)
 
-// 	forever := make(chan bool) // travar 
-// 	go func(){
-// 		for d := range msgsFromClient {
+	// prepara o recebimento de mensagens do cliente
+	msgsFromClient, err := ch.Consume(requestQueue.Name, "", true, false,
+		false, false, nil)
+	shared.CheckError(err)
 
-// 			// recebe request
-// 			msgRequest := shared.Request{}
-// 			err := json.Unmarshal(d.Body, &msgRequest)
-// 			shared.CheckError(err)
-	
-// 			// processa request
-// 			r := application.CalcFibonacci(msgRequest.Req)
+	fmt.Println("Servidor pronto...")
 
-// 			// prepara resposta
-// 			replyMsg := shared.Response{Res: r}
-// 			replyMsgBytes, err := json.Marshal(replyMsg)
-// 			shared.CheckError(err)
-	
-// 			// publica resposta
-// 			err = ch.Publish("", replyQueue.Name, false, false,
-// 				amqp.Publishing{ContentType: "text/plain", Body: replyMsgBytes,})
-// 			shared.CheckError(err)
-// 		}
-// 	}()
+	forever := make(chan bool) // travar
+	fmt.Println("Time")
+	go func() {
+		for d := range msgsFromClient {
 
-// 	<- forever
-	
-// }
+			// recebe request
+			msgRequest := rad.Radiation{}
+			err := json.Unmarshal(d.Body, &msgRequest)
+			shared.CheckError(err)
+
+			// Medindo o tempo
+			t1 := time.Now().UnixNano()
+			t2 := msgRequest.Timestamp
+			s := fmt.Sprintf("%d", t1-t2)
+			fmt.Println(s)
+
+			// processa request
+			r := rad.IsRadiationDangerous(msgRequest.Value)
+			if r {
+
+				// prepara resposta
+				replyMsg := rad.Validator{IsDangerous: r}
+				replyMsgBytes, err := json.Marshal(replyMsg)
+				shared.CheckError(err)
+
+				// publica resposta
+				err = ch.Publish("", replyQueue.Name, false, false,
+					amqp.Publishing{ContentType: "text/plain", Body: replyMsgBytes})
+				shared.CheckError(err)
+			}
+		}
+	}()
+
+	<-forever
+
+}
