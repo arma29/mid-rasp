@@ -17,6 +17,4 @@ func main() {
 
 	Server := QueueServer{}
 	fmt.Println(Server)
-
-	
 }

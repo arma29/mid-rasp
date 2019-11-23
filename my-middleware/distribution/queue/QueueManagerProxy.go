@@ -18,7 +18,6 @@ func (proxy QueueManagerProxy) Send(op string, msg message.Message) {
 	crh := crh.CRH{ServerHost: shared.QUEUE_SERVER_HOST, ServerPort: shared.QUEUE_SERVER_PORT }
 	marshaller := marshaller.Marshaller{}
 
-
 	pkt := packet.Packet{}
 	pkt.Header = packet.PacketHeader{Operation: op}
 	pkt.Body = packet.PacketBody{Message: msg}
