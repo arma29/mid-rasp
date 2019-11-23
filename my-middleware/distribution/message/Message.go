@@ -5,14 +5,12 @@ import (
 )
 
 type Message struct {
-
 	Header MessageHeader;
 	Body MessageBody;
 }
 
 
 type MessageHeader struct {
-
 	Destination string;
 	Enterprise string;
 	SensorID string;
@@ -22,6 +20,5 @@ type MessageHeader struct {
 
 
 type MessageBody struct {
-
-	content interface{};
+	Content interface{};
 }

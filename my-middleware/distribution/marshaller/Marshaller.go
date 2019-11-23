@@ -8,19 +8,19 @@ import (
 
 type Marshaller struct {}
 
-func (Marshaller) Marshall(pct packet.Packet) []byte {
+func (Marshaller) Marshall(pkt packet.Packet) []byte {
 
-	result, err := json.Marshal(pct)
+	result, err := json.Marshal(pkt)
 	shared.CheckError(err)
 
 	return result
 }
 
-func (Marshaller) Unmarshall(pct []byte) packet.Packet {
+func (Marshaller) Unmarshall(pkt []byte) packet.Packet {
 		
 	result := packet.Packet{}
 	
-	err := json.Unmarshal(pct, &result)
+	err := json.Unmarshal(pkt, &result)
 	shared.CheckError(err)
 	
 	return result
