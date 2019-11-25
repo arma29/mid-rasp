@@ -12,8 +12,9 @@ const RABBITMQ_PORT = 5672
 const QUEUE_SERVER_HOST = "localhost"
 const QUEUE_SERVER_PORT = 7574
 
-const REAL_TIME = 10 * time.Second
-const EXPERIMENT_TIEM = 0
+const REAL_TIME = 2 * time.Second
+const EXPERIMENT_TIME = 0
+const WAIT_TIME = 500 * time.Millisecond
 
 // CheckError is
 func CheckError(err error) {

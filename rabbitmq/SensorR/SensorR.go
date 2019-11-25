@@ -1,4 +1,4 @@
-package sensorr
+package main
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 
 func main() {
 	// Get Argument from command Line
-	if len(os.Args) != 3 {
+	if len(os.Args) != 2 {
 		fmt.Printf("Missing arguments: %s number\n", os.Args[0])
 		os.Exit(1)
 	}
@@ -48,39 +48,39 @@ func main() {
 		false, false, nil)
 	shared.CheckError(err)
 
-	// TODO: Colocar na fila antes
 	// enviar
-	go func() {
-		for {
-			// prepara request
-			msgRequest := rad.Radiation{Value: rad.GenerateRadiationValue(), Timestamp: time.Now().UnixNano()}
-			msgRequestBytes, err := json.Marshal(msgRequest)
-			shared.CheckError(err)
+	for {
+		// prepara request
+		msgRequest := rad.Radiation{Value: rad.GenerateRadiationValue(), Timestamp: time.Now().UnixNano()}
+		msgRequestBytes, err := json.Marshal(msgRequest)
+		fmt.Printf("Estrutura Enviada: ")
+		fmt.Println(msgRequest)
+		shared.CheckError(err)
 
-			// publica request <-> fila de envio
-			err = ch.Publish("", requestQueue.Name, false, false,
-				amqp.Publishing{ContentType: "text/plain", Body: msgRequestBytes})
-			shared.CheckError(err)
+		// publica request <-> fila de envio
+		err = ch.Publish("", requestQueue.Name, false, false,
+			amqp.Publishing{ContentType: "text/plain", Body: msgRequestBytes})
+		shared.CheckError(err)
 
-			// Garantir taxa máxima
-			time.Sleep(shared.REAL_TIME)
+		// Aguarda resposta
+		listenChannel(msgsFromServer)
 
-		}
-	}()
+		// Garantir taxa máxima
+		time.Sleep(shared.REAL_TIME)
+	}
+}
 
-	// escutar
-	go func() {
-		for {
-			// recebe resposta em bytes
-			x := <-msgsFromServer
+// Escutar o canal e dar um timeout a ele
+func listenChannel(ch <-chan amqp.Delivery) {
+	select {
+	case res := <-ch:
+		fmt.Println("Deu tempo: ")
+		msgReply := rad.Validator{}
+		err := json.Unmarshal([]byte(res.Body), &msgReply)
+		shared.CheckError(err)
 
-			// deserializa
-			msgReply := rad.Validator{}
-			err = json.Unmarshal([]byte(x.Body), &msgReply)
-			shared.CheckError(err)
-
-			//Acender o led de alguma forma
-			fmt.Println(msgReply)
-		}
-	}()
+		//Acender o led de alguma forma
+	case <-time.After(shared.WAIT_TIME):
+		fmt.Println("Não deu tempo")
+	}
 }

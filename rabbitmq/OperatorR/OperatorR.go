@@ -1,4 +1,4 @@
-package operatorr
+package main
 
 import (
 	"encoding/json"
@@ -57,6 +57,8 @@ func main() {
 			// recebe request
 			msgRequest := rad.Radiation{}
 			err := json.Unmarshal(d.Body, &msgRequest)
+			fmt.Printf("Estrutura Recebida: ")
+			fmt.Println(msgRequest)
 			shared.CheckError(err)
 
 			// Medindo o tempo
@@ -68,7 +70,6 @@ func main() {
 			// processa request
 			r := rad.IsRadiationDangerous(msgRequest.Value)
 			if r {
-
 				// prepara resposta
 				replyMsg := rad.Validator{IsDangerous: r}
 				replyMsgBytes, err := json.Marshal(replyMsg)
