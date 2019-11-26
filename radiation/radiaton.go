@@ -14,6 +14,7 @@ type Radiation struct {
 // Validator is
 type Validator struct {
 	IsDangerous bool
+	Timestamp   int64 //nanosegundos
 }
 
 // GenerateRadiationValue returns random float32 value

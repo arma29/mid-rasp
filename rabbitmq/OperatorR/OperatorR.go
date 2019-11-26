@@ -71,7 +71,7 @@ func main() {
 			r := rad.IsRadiationDangerous(msgRequest.Value)
 			if r {
 				// prepara resposta
-				replyMsg := rad.Validator{IsDangerous: r}
+				replyMsg := rad.Validator{IsDangerous: r, Timestamp: msgRequest.Timestamp}
 				replyMsgBytes, err := json.Marshal(replyMsg)
 				shared.CheckError(err)
 

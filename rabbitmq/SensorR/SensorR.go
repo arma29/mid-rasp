@@ -10,7 +10,21 @@ import (
 	"github.com/streadway/amqp"
 
 	rad "github.com/arma29/mid-rasp/radiation"
+	queue "github.com/arma29/mid-rasp/sensorqueue"
 	"github.com/arma29/mid-rasp/shared"
+)
+
+var (
+	rabbitConn    *amqp.Connection
+	rabbitChannel *amqp.Channel
+
+	requestQueue amqp.Queue
+	replyQueue   amqp.Queue
+
+	msgsFromServer <-chan amqp.Delivery
+
+	amqpURI string
+	err     error
 )
 
 func main() {
@@ -21,66 +35,120 @@ func main() {
 	}
 
 	ipContainer := os.Args[1]
-
-	// conecta ao servidor de mensageria
-	conn, err := amqp.Dial("amqp://guest:guest@" +
+	amqpURI = "amqp://guest:guest@" +
 		ipContainer + ":" +
-		strconv.Itoa(shared.RABBITMQ_PORT) + "/")
-	shared.CheckError(err)
-	defer conn.Close()
+		strconv.Itoa(shared.RABBITMQ_PORT) + "/"
 
+	// Prepara as estruturas do middleware
+	initRabbit()
+	// Fechamento de canais deve ser no escopo main
+	defer rabbitConn.Close()
+	defer rabbitChannel.Close()
+
+	// loop de escutar
+	go waitMsgs(msgsFromServer)
+
+	// inicia fila de armazenamento do sensor
+	queue.InitQueue()
+	// loop de enviar
+	for i := 0; i < 100; i++ {
+
+		queue.Enqueue(rad.Radiation{Value: rad.GenerateRadiationValue(),
+			Timestamp: time.Now().UnixNano()})
+
+		if !rabbitConn.IsClosed() {
+			parseQueue()
+		} else {
+			fmt.Println("Sem conexão")
+			// tenta conexão mais uma vez
+			if hasReconnected() {
+
+				initRabbit()
+				// Fechar canais deve ser no escopo main
+				defer rabbitConn.Close()
+				defer rabbitChannel.Close()
+
+				go waitMsgs(msgsFromServer)
+			}
+		}
+		// Garantir taxa máxima
+		time.Sleep(shared.REAL_TIME)
+	}
+
+}
+
+func initRabbit() {
+	rabbitConn = initConn()
+	rabbitChannel = initCh()
+	initUtils()
+}
+
+func initConn() *amqp.Connection {
+	// cria conexão
+	conn, err := amqp.Dial(amqpURI)
+	shared.CheckError(err)
+	return conn
+}
+
+func initCh() *amqp.Channel {
 	// cria o canal
-	ch, err := conn.Channel()
+	ch, err := rabbitConn.Channel()
 	shared.CheckError(err)
-	defer ch.Close()
+	return ch
+}
 
+func initUtils() {
 	// declara  filas, cria se não existir
-	requestQueue, err := ch.QueueDeclare( // fila de envio
+	requestQueue, err = rabbitChannel.QueueDeclare( // fila de envio
 		"request", false, false, false, false, nil)
 	shared.CheckError(err)
 
-	replyQueue, err := ch.QueueDeclare( // fila de respostas
+	replyQueue, err = rabbitChannel.QueueDeclare( // fila de respostas
 		"response", false, false, false, false, nil)
 	shared.CheckError(err)
 
 	// cria consumidor <-> fila de respostas -> async
-	msgsFromServer, err := ch.Consume(replyQueue.Name, "", true, false,
+	msgsFromServer, err = rabbitChannel.Consume(replyQueue.Name, "", true, false,
 		false, false, nil)
 	shared.CheckError(err)
-
-	// enviar
-	for {
-		// prepara request
-		msgRequest := rad.Radiation{Value: rad.GenerateRadiationValue(), Timestamp: time.Now().UnixNano()}
-		msgRequestBytes, err := json.Marshal(msgRequest)
-		fmt.Printf("Estrutura Enviada: ")
-		fmt.Println(msgRequest)
-		shared.CheckError(err)
-
-		// publica request <-> fila de envio
-		err = ch.Publish("", requestQueue.Name, false, false,
-			amqp.Publishing{ContentType: "text/plain", Body: msgRequestBytes})
-		shared.CheckError(err)
-
-		// Aguarda resposta
-		listenChannel(msgsFromServer)
-
-		// Garantir taxa máxima
-		time.Sleep(shared.REAL_TIME)
-	}
 }
 
-// Escutar o canal e dar um timeout a ele
-func listenChannel(ch <-chan amqp.Delivery) {
-	select {
-	case res := <-ch:
-		fmt.Println("Deu tempo: ")
+func waitMsgs(ch <-chan amqp.Delivery) {
+	for res := range ch {
 		msgReply := rad.Validator{}
 		err := json.Unmarshal([]byte(res.Body), &msgReply)
 		shared.CheckError(err)
+		fmt.Printf("Falha registrada em: ")
+		fmt.Println(time.Unix(0, msgReply.Timestamp))
 
-		//Acender o led de alguma forma
-	case <-time.After(shared.WAIT_TIME):
-		fmt.Println("Não deu tempo")
+		// Acender o Led GPIO lib
 	}
+}
+
+func parseQueue() {
+	for !queue.Empty() {
+
+		// prepara request
+		msgRequest := queue.Peek()
+		msgRequestBytes, err := json.Marshal(msgRequest)
+		shared.CheckError(err)
+		fmt.Printf("Estrutura Enviada: ")
+		fmt.Println(msgRequest)
+
+		// publica request <-> fila de envio
+		err = rabbitChannel.Publish("", requestQueue.Name, false, false,
+			amqp.Publishing{ContentType: "text/plain", Body: msgRequestBytes})
+		shared.CheckError(err)
+
+		// remove da fila
+		queue.Dequeue()
+	}
+}
+
+func hasReconnected() bool {
+	_, err := amqp.Dial(amqpURI)
+	if err == nil {
+		return true
+	}
+	return false
 }
