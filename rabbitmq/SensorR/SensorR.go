@@ -29,13 +29,16 @@ var (
 
 func main() {
 	// Get Argument from command Line
-	if len(os.Args) != 2 {
+	if len(os.Args) != 4 {
 		fmt.Printf("Missing arguments: %s number\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	ipContainer := os.Args[1]
-	amqpURI = "amqp://guest:guest@" +
+	user := os.Args[1]
+	password := os.Args[2]
+	ipContainer := os.Args[3]
+
+	amqpURI = "amqp://" + user + ":" + password + "@" +
 		ipContainer + ":" +
 		strconv.Itoa(shared.RABBITMQ_PORT) + "/"
 
