@@ -21,6 +21,9 @@ func (srh SRH) Receive() []byte {
 	listener, err = net.Listen("tcp", srh.ServerHost + ":" + strconv.Itoa(srh.ServerPort))
 	shared.CheckError(err)
 
+	// Remenber to close connection
+	defer listener.Close()
+
 	for {
 		conn, err = listener.Accept()
 		if err == nil {
@@ -29,18 +32,19 @@ func (srh SRH) Receive() []byte {
 	}
 
 	// Receive Message
-	msgLengthBytes := make([]byte, 4)
-	_, err = conn.Read(msgLengthBytes)
+	pktLengthBytes := make([]byte, 4)
+	_, err = conn.Read(pktLengthBytes)
 	shared.CheckError(err)
 
-	msgLength := binary.LittleEndian.Uint32(msgLengthBytes)
+	pktLength := binary.LittleEndian.Uint32(pktLengthBytes)
 
 	// receive message
-	msg := make([]byte, msgLength)
-	_, err = conn.Read(msg)
+	pkt := make([]byte, pktLength)
+	_, err = conn.Read(pkt)
 	shared.CheckError(err)
 
-	return msg
+	return pkt
+	
 }
 
 
@@ -60,3 +64,4 @@ func (SRH) Send(msg []byte) {
 	conn.Close()
 	listener.Close()
 }
+

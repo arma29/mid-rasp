@@ -5,8 +5,6 @@ import (
 )
 
 type QueueManager struct {
-	host string
-	port int
 	queueMap map[string]Queue
 }
 

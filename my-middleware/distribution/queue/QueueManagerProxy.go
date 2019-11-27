@@ -9,18 +9,28 @@ import (
 )
 
 type QueueManagerProxy struct {
-	queueName string
+	Host string
+	Port int
+	QueueName string
 }
 
 
-func (proxy QueueManagerProxy) Send(op string, msg message.Message) {
+func (proxy QueueManagerProxy) Send(op string, content interface{}) {
 
 	crh := crh.CRH{ServerHost: shared.QUEUE_SERVER_HOST, ServerPort: shared.QUEUE_SERVER_PORT }
 	marshaller := marshaller.Marshaller{}
+
+	msgHeader := message.MessageHeader{Host: proxy.Host, Port: proxy.Port, Destination: proxy.QueueName}
+	msgBody := message.MessageBody{Content: content}
+	msg := message.Message{Header: msgHeader, Body: msgBody}
 
 	pkt := packet.Packet{}
 	pkt.Header = packet.PacketHeader{Operation: op}
 	pkt.Body = packet.PacketBody{Message: msg}
 
-	crh.Send(marshaller.Marshall(pkt))
+	crh.Send(marshaller.Marshal(pkt))
 }
+
+
+
+

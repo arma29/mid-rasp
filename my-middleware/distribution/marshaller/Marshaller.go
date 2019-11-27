@@ -8,7 +8,7 @@ import (
 
 type Marshaller struct {}
 
-func (Marshaller) Marshall(pkt packet.Packet) []byte {
+func (Marshaller) Marshal(pkt packet.Packet) []byte {
 
 	result, err := json.Marshal(pkt)
 	shared.CheckError(err)
@@ -16,7 +16,7 @@ func (Marshaller) Marshall(pkt packet.Packet) []byte {
 	return result
 }
 
-func (Marshaller) Unmarshall(pkt []byte) packet.Packet {
+func (Marshaller) Unmarshal(pkt []byte) packet.Packet {
 		
 	result := packet.Packet{}
 	

@@ -11,6 +11,8 @@ type Message struct {
 
 
 type MessageHeader struct {
+	Host string;
+	Port int;
 	Destination string;
 	Enterprise string;
 	SensorID string;

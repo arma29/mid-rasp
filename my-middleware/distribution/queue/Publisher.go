@@ -1,4 +1,4 @@
-package queueServer
+package queue
 
 import (
 )

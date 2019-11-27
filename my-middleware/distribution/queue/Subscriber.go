@@ -1,4 +1,4 @@
-package queueServer
+package queue
 
 type Subscriber struct {
 	Host string
@@ -11,10 +11,10 @@ type SubscriberManager struct {
 }
 
 // Subscribe to destination queue
-func (subManager SubscriberManager) SubscribeRequest(host string, port int, destination string) {
+func (subManager *SubscriberManager) SubscribeRequest(host string, port int, destination string) {
 
 	if subManager.SubList == nil {
-		subManager.SubList = make([]Subscriber, 1)
+		subManager.SubList = make([]Subscriber, 0)
 	}
 
 	// Get or Create Subscriber
