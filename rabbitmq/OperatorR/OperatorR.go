@@ -17,13 +17,15 @@ import (
 func main() {
 
 	// Get Argument from command Line
-	if len(os.Args) != 2 {
+	if len(os.Args) != 4 {
 		fmt.Printf("Missing arguments: %s number\n", os.Args[0])
 		os.Exit(1)
 	}
-	ipContainer := os.Args[1]
+	user := os.Args[1]
+	password := os.Args[2]
+	ipContainer := os.Args[3]
 
-	conn, err := amqp.Dial("amqp://guest:guest@" +
+	conn, err := amqp.Dial("amqp://" + user + ":" + password + "@" +
 		ipContainer + ":" +
 		strconv.Itoa(shared.RABBITMQ_PORT) + "/")
 	shared.CheckError(err)
@@ -71,7 +73,7 @@ func main() {
 			r := rad.IsRadiationDangerous(msgRequest.Value)
 			if r {
 				// prepara resposta
-				replyMsg := rad.Validator{IsDangerous: r}
+				replyMsg := rad.Validator{IsDangerous: r, Timestamp: msgRequest.Timestamp}
 				replyMsgBytes, err := json.Marshal(replyMsg)
 				shared.CheckError(err)
 
