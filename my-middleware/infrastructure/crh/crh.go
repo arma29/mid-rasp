@@ -36,17 +36,40 @@ func (crh CRH) Send(msg []byte) {
 	_, err = conn.Write(msg)
 	shared.CheckError(err)
 
-	// Receiver Message
-	// msgReceivedLengthBytes := make([]byte, 4)
-	// _, err = conn.Read(msgReceivedLengthBytes)
-	
-	// msgReceivedLengthInt := binary.LittleEndian.Uint32(msgReceivedLengthBytes)
-
-	// msgFromServer := make([]byte, msgReceivedLengthInt)
-	// _, err = conn.Read(msgFromServer)
-	// shared.CheckError(err)
-
 	conn.Close()
+}
 
-	// return msgFromServer
+var listener net.Listener
+var conn net.Conn
+var err error
+
+
+func (crh CRH) Receive() []byte {
+
+
+	listener, err = net.Listen("tcp", crh.ServerHost + ":" + strconv.Itoa(crh.ServerPort))
+	shared.CheckError(err)
+
+	defer listener.Close()
+
+	for {
+		conn, err = listener.Accept()
+		if err == nil {
+			break
+		}
+	}
+
+	// Receive Message
+	pktLengthBytes := make([]byte, 4)
+	_, err = conn.Read(pktLengthBytes)
+	shared.CheckError(err)
+	
+	pktLength := binary.LittleEndian.Uint32(pktLengthBytes)
+	
+	// receive message
+	pkt := make([]byte, pktLength)
+	_, err = conn.Read(pkt)
+	shared.CheckError(err)
+	
+	return pkt
 }

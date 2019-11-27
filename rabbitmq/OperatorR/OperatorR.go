@@ -6,11 +6,8 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	rad "github.com/arma29/mid-rasp/radiation"
-
 	"github.com/streadway/amqp"
-
 	"github.com/arma29/mid-rasp/shared"
 )
 

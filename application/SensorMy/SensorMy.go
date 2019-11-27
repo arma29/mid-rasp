@@ -18,5 +18,6 @@ func main() {
 
 
 	radQueueProxy.Send("publish", rad.Radiation{Value:5})
+	radQueueProxy.Send("publish", rad.Radiation{Value:9})
 
 }

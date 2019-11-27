@@ -6,6 +6,7 @@ import (
 	"github.com/arma29/mid-rasp/my-middleware/infrastructure/crh"
 	"github.com/arma29/mid-rasp/my-middleware/distribution/marshaller"
 	"github.com/arma29/mid-rasp/shared"
+	"fmt"
 )
 
 type QueueManagerProxy struct {
@@ -29,7 +30,36 @@ func (proxy QueueManagerProxy) Send(op string, content interface{}) {
 	pkt.Body = packet.PacketBody{Message: msg}
 
 	crh.Send(marshaller.Marshal(pkt))
+
+	//TODO: Check if subscription was successful
+
+	// Listen for notifications
+	if (op == "subscribe") {
+		proxy.Receive()
+	}
+	
 }
+
+
+
+
+func (proxy QueueManagerProxy) Receive() message.Message {
+
+	crh := crh.CRH{ServerHost: proxy.Host, ServerPort: proxy.Port }
+	marshaller := marshaller.Marshaller{}
+
+	pktBytes := crh.Receive()
+
+	pkt := marshaller.Unmarshal(pktBytes)
+	msg := pkt.Body.Message
+
+	fmt.Printf("Mensagem Recebida:\n")
+	fmt.Printf("\t%v", msg)
+
+	return msg
+}
+
+
 
 
 

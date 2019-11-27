@@ -9,11 +9,12 @@ import(
 
 func main() {
 
-	SENSOR_HOST := "localhost"
-	SENSOR_PORT := 9004
+	OPERATOR_HOST := "localhost"
+	OPERATOR_PORT := 9004
 
 	// Object responsable for delievering message to queue
-	radQueueProxy := queue.QueueManagerProxy{Host: SENSOR_HOST, Port: SENSOR_PORT, QueueName: "radiation"}
+	radQueueProxy := queue.QueueManagerProxy{Host: OPERATOR_HOST, Port: OPERATOR_PORT, QueueName: "radiation"}
 	radQueueProxy.Send("subscribe", nil)
 
+	// fmt.Scanln()
 }
