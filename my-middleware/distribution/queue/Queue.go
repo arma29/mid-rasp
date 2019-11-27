@@ -5,6 +5,6 @@ import (
 )
 
 type Queue struct {
-	length int
-	msgList []message.Message
+	Length int
+	MsgList []message.Message
 }

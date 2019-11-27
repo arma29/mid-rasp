@@ -5,6 +5,7 @@ import (
 	"github.com/arma29/mid-rasp/my-middleware/infrastructure/srh"
 	"github.com/arma29/mid-rasp/my-middleware/distribution/marshaller"
 	"github.com/arma29/mid-rasp/my-middleware/distribution/queue"
+
 )
 
 type QueueInvoker struct {
@@ -31,7 +32,6 @@ func (invoker QueueInvoker) Invoke() {
 		// demux request
 		switch operation {
 			case "subscribe" :
-				
 				// Get Message Data
 				msgReceived := packetReceived.Body.Message
 				host := msgReceived.Header.Host
@@ -43,6 +43,7 @@ func (invoker QueueInvoker) Invoke() {
 				subManager.SubscribeRequest(host, port, dest)
 				
 				// Logging Info
+				fmt.Printf("\n")
 				fmt.Printf("Invoker Op -> Subscribe -> %s:%d subscribed to \"%s\"\n", host, port, dest)
 				fmt.Printf("Invoker Op -> Subscribe -> Lista de Subscribers (%d)\n", len(subManager.SubList))
 				for _, subscriber := range subManager.SubList {
@@ -55,9 +56,54 @@ func (invoker QueueInvoker) Invoke() {
 					}
 				}
 
-			case "Lookup":
-				fmt.Printf("Lookup not implemented")
-			}
+			case "publishRequest" :
+				// Get Message Data
+				msgReceived := packetReceived.Body.Message
+				host := msgReceived.Header.Host
+				port := msgReceived.Header.Port
+				dest := msgReceived.Header.Destination
 
+				// Publish to Queue
+				pubManager := &queueServer.PubManager
+				pubManager.PublishRequest(host, port, dest)
+				
+				// Logging Info
+				fmt.Printf("\n")
+				fmt.Printf("Invoker Op -> Publish Request -> %s:%d is now a publisher of \"%s\"\n", host, port, dest)
+				fmt.Printf("Invoker Op -> Publish Request -> Lista de Publishers (%d)\n", len(pubManager.PubList))
+				for _, publisher := range pubManager.PubList {
+					fmt.Printf("%s:%d\n", publisher.Host, publisher.Port)
+
+					for k, v := range publisher.PublishQueues {
+						if v {
+							fmt.Printf("\t%s\n", k)
+						}
+					}
+				}
+
+			case "publish" :
+				// Get Message Data
+				msgReceived := packetReceived.Body.Message
+				host := msgReceived.Header.Host
+				port := msgReceived.Header.Port
+				dest := msgReceived.Header.Destination
+
+				// Check if Publisher is authorized
+				// pubManager := &queueServer.PubManager
+
+
+				// Publish to Queue
+				queueManager := &queueServer.QueueManager
+				queueManager.EnqueueMsg(msgReceived)
+
+				// Logging Info
+				fmt.Printf("\n")
+				fmt.Printf("Invoker Op -> Publish -> %s:%d has published in \"%s\"\n", host, port, dest)
+				queue := queueManager.GetQueue(dest)
+				fmt.Printf("Invoker Op -> Publish -> Lista de Mensagens na Fila \"%s\" (%d)\n", dest, len(queue.MsgList))
+				for _, msg := range queue.MsgList {
+					fmt.Printf("%s:%d -> %v\n", msg.Header.Host, msg.Header.Port, msg.Body.Content)
+					}
+				}
+		}
 	}
-}

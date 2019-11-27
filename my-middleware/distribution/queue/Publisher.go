@@ -14,7 +14,7 @@ type PublisherManager struct {
 }
 
 // Mark a host as a publisher
-func (pubManager PublisherManager) PublishRequest(host string, port int, destination string) {
+func (pubManager *PublisherManager) PublishRequest(host string, port int, destination string) {
 
 	if pubManager.PubList == nil {
 		pubManager.PubList = make([]Publisher, 0)

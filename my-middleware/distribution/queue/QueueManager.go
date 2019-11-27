@@ -4,22 +4,22 @@ import (
 	"github.com/arma29/mid-rasp/my-middleware/distribution/message"
 )
 
-type QueueManager struct {
-	queueMap map[string]Queue
+type QueueManager struct { 
+	queueMap map[string]*Queue
 }
 
 
-func (manager QueueManager) GetQueue(queueName string) Queue {
+func (manager *QueueManager) GetQueue(queueName string) *Queue {
 
 	// Allocate for HashMap
 	if (manager.queueMap == nil) {
-		manager.queueMap = make(map[string]Queue)
+		manager.queueMap = make(map[string]*Queue)
 	}
 
 	queue, exists := manager.queueMap[queueName]
 
 	if (!exists) {
-		queue = Queue{}
+		queue = &Queue{Length:0, MsgList: make([]message.Message, 0)}
 		manager.queueMap[queueName] = queue
 	}
 
@@ -27,13 +27,15 @@ func (manager QueueManager) GetQueue(queueName string) Queue {
 }
 
 
-func (manager QueueManager) QueueMsg(msg message.Message) {
+func (manager *QueueManager) EnqueueMsg(msg message.Message) {
 
-	msgHeader := msg.Header
+	dest := msg.Header.Destination
 
-	queue := manager.queueMap[msgHeader.Destination]
-	queue.msgList = append(queue.msgList, msg)
-	queue.length = len(queue.msgList)
+	queue := manager.GetQueue(dest)
+
+	queue.MsgList = append(queue.MsgList, msg)
+	queue.Length = len(queue.MsgList)
+
 }
 
 
