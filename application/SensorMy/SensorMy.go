@@ -1,23 +1,19 @@
 package main
 
 import(
-	"fmt"
-	"math/rand"
-	"time"
+	// "fmt"
+	"github.com/arma29/mid-rasp/my-middleware/distribution/queue"
+	// rad "github.com/arma29/mid-rasp/radiation"
+	
 )
 
 func main() {
 
-	// Seed with a constantly changing number
-	rand.Seed(time.Now().UnixNano())
+	SENSOR_HOST := "localhost"
+	SENSOR_PORT := 9004
 
-	// Differentiating Radiatin Type and Origin
-	radTypes := [3]string{"Alfa", "Beta", "Gamma"}
-	radOrigins := [2]string{"RadCorps", "ActiveX"}
-	
-	radType := radTypes[rand.Intn(len(radTypes))]
-	radOrigin := radOrigins[rand.Intn(len(radOrigins))]
-	radValue := rand.Float64()
+	// Object responsable for delievering message to queue
+	radQueueProxy := queue.QueueManagerProxy{Host: SENSOR_HOST, Port: SENSOR_PORT, QueueName: "radiation2"}
+	radQueueProxy.Send("subscribe", nil)
 
-	fmt.Printf("%s - %s %f", radOrigin, radType, radValue)
 }
