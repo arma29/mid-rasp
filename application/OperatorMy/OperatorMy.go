@@ -5,7 +5,8 @@ import(
 )
 
 func main() {
-
+	
+	// Operator Info
 	OPERATOR_HOST := "localhost"
 	OPERATOR_PORT := 9004
 

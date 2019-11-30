@@ -9,6 +9,7 @@ import(
 
 func main() {
 
+	// Sensor Info
 	SENSOR_HOST := "localhost"
 	SENSOR_PORT := 9015
 
@@ -16,7 +17,7 @@ func main() {
 	radQueueProxy := queue.QueueManagerProxy{Host: SENSOR_HOST, Port: SENSOR_PORT, QueueName: "radiation"}
 	radQueueProxy.Send("publishRequest", nil)
 
-
+	// Published Data
 	radQueueProxy.Send("publish", rad.Radiation{Value:5})
 	radQueueProxy.Send("publish", rad.Radiation{Value:9})
 

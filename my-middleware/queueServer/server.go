@@ -9,11 +9,11 @@ import (
 func main() {
 
 	fmt.Println("Queue Server running...")
-	// go func() {
+	go func() {
 		// Listen for publish/subscribe requests
 		queueInvoker := invoker.QueueInvoker{Host:shared.QUEUE_SERVER_HOST, Port:shared.QUEUE_SERVER_PORT}
 		queueInvoker.Invoke()
-	// }()
+	}()
 
 	// Stop main thread
 	wait := make(chan string)

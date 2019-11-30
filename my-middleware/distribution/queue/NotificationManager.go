@@ -4,40 +4,21 @@ import (
 	"github.com/arma29/mid-rasp/my-middleware/distribution/message"
 )
 
-const (
-	NOTIFICATION_READY = 0
-	NOTICATION_SENT = 1
-)
-
 type Notification struct {
 	Host string
 	Port int
-	Status int
 	Message message.Message
 }
 
-type NotificationManager struct{
-	NotificationList []*Notification
-}
-
-// Append notifications to NotificationList
-func (manager *NotificationManager) addNotification(notif Notification) {
-
-	if (manager.NotificationList == nil) {
-		manager.NotificationList = make([]*Notification, 0)
-	}
-	manager.NotificationList = append(manager.NotificationList, &notif)
-}
-
+type NotificationManager struct {}
 
 // Create new Notifications for all subscribers for that message destination
 func (manager *NotificationManager) NewMessageToNotify(msg message.Message, subList []Subscriber) []Notification {
 
-	notifList := make([]Notificiation, 0)
+	notifList := make([]Notification, 0)
 	for _, sub := range subList {
-		notif := Notification{Host:sub.Host, Port:sub.Port, Status: NOTIFICATION_READY, Message:msg}
-		notifList = notifList.append(notifList, notif)
-		//manager.addNotification(notif)
+		notif := Notification{Host:sub.Host, Port:sub.Port, Message:msg}
+		notifList = append(notifList, notif)
 	}
 
 	return notifList
@@ -45,16 +26,19 @@ func (manager *NotificationManager) NewMessageToNotify(msg message.Message, subL
 
 
 // Create new Notifications for all messages in the Queue that sub has subscribed
-func (manager *NotificationManager) NewSubscriberToNotify(sub Subscriber, queue Queue) {
+func (manager *NotificationManager) NewSubscriberToNotify(sub Subscriber, queue Queue) []Notification {
 	
 	msgList := queue.MsgList
+	notifList := make([]Notification, 0)
 
 	if len(msgList) > 0 {
 		for _, msg := range msgList {
-			notif := Notification{Host:sub.Host, Port:sub.Port, Status:NOTIFICATION_READY, Message: msg}
-			//manager.addNotification(notif)
+			notif := Notification{Host:sub.Host, Port:sub.Port, Message: msg}
+			notifList = append(notifList, notif)
 		}
 	}
+
+	return notifList
 }
 
 

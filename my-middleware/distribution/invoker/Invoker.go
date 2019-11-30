@@ -27,26 +27,24 @@ func (invoker QueueInvoker) Invoke() {
 	notifManager := &queueServer.NotifManager
 
 	// Notification Channel
-	notifChannel := make(chan queue.Notification)
+	notifChannel := make(chan queue.Notification, 100)
 
 
 	// Execute Nofitication Event Sender
 	go func () {
 		for {
-				notif := <- notifChannel
+			notif := <- notifChannel
 
-				subSRH := srh.SRH{ServerHost: notif.Host, ServerPort: notif.Port}
+			subSRH := srh.SRH{ServerHost: notif.Host, ServerPort: notif.Port}
 
-				// Create Packet
-				pktHeader := packet.PacketHeader{Operation: "notify"}
-				pktBody := packet.PacketBody{Message: notif.Message}
-				pkt := packet.Packet{Header: pktHeader, Body: pktBody}
+			// Create Packet
+			pktHeader := packet.PacketHeader{Operation: "notify"}
+			pktBody := packet.PacketBody{Message: notif.Message}
+			pkt := packet.Packet{Header: pktHeader, Body: pktBody}
 
-				pktBytes := marshallerImpl.Marshal(pkt)
+			pktBytes := marshallerImpl.Marshal(pkt)
 
-				subSRH.Send(pktBytes)
-				// notif.Status = queue.NOTICATION_SENT
-			}
+			subSRH.Send(pktBytes)
 		}
 	}()
 
@@ -74,8 +72,12 @@ func (invoker QueueInvoker) Invoke() {
 
 				// Create Notifications for New Subscriber
 				queue := queueManager.GetQueue(dest)
-				notifManager.NewSubscriberToNotify(*sub, *queue)
-				
+				notifList := notifManager.NewSubscriberToNotify(*sub, *queue)
+
+				for _, notif := range notifList {
+					notifChannel <- notif
+				}
+							
 				// Logging Info
 				fmt.Printf("\n")
 				fmt.Printf("Invoker Op -> Subscribe -> %s:%d subscribed to \"%s\"\n", host, port, dest)
