@@ -11,7 +11,7 @@ type SubscriberManager struct {
 }
 
 // Subscribe to destination queue
-func (subManager *SubscriberManager) SubscribeRequest(host string, port int, destination string) {
+func (subManager *SubscriberManager) SubscribeRequest(host string, port int, destination string) *Subscriber{
 
 	if subManager.SubList == nil {
 		subManager.SubList = make([]Subscriber, 0)
@@ -28,26 +28,24 @@ func (subManager *SubscriberManager) SubscribeRequest(host string, port int, des
 	// Subscribe
 	subscriber.QueuesSubscribed[destination] = true
 	
+	return &subscriber
 } 
+
 
 // Subscribe to destination queue
 func (subManager SubscriberManager) UnsubscribeRequest(host string, port int, destination string) {
 
-	if subManager.SubList == nil {
-		return 
+	if subManager.SubList != nil {
+		// Get or Create Subscriber
+		subscriber, exists := subManager.getSubscriber(host, port)
+		if exists{
+			subscriber.QueuesSubscribed[destination] = false	
+		}
 	}
-
-	// Get or Create Subscriber
-	subscriber, exists := subManager.getSubscriber(host, port)
-
-	if !exists{
-		return
-	}
-
-	// Remove destination string from subscribe list
-	subscriber.QueuesSubscribed[destination] = false	
 } 
 
+
+// Get Subscriber object from Host and Port
 func (subManager SubscriberManager) getSubscriber(host string, port int) (Subscriber, bool) {
 
 	var subscriber Subscriber
@@ -59,6 +57,19 @@ func (subManager SubscriberManager) getSubscriber(host string, port int) (Subscr
 			exists = true
 		}
 	}
-
 	return subscriber, exists
 }	
+
+
+// Get Subscriber List attached to a Queue
+func (subManager SubscriberManager) GetSubscribersByQueue(queueName string) []Subscriber {
+
+	subscriberList := make([]Subscriber, 0)
+
+	for _, sub := range subManager.SubList {
+		if sub.QueuesSubscribed[queueName] {
+			subscriberList = append(subscriberList, sub)
+		}
+	}
+	return subscriberList
+}

@@ -48,7 +48,18 @@ func (srh SRH) Receive() []byte {
 }
 
 
-func (SRH) Send(msg []byte) {
+func (srh SRH) Send(msg []byte) {
+
+	var conn net.Conn
+	var err error
+
+	for {
+		conn, err = net.Dial("tcp", srh.ServerHost + ":" + strconv.Itoa(srh.ServerPort))
+
+		if err == nil && conn != nil {
+			break
+		}
+	}
 
 	// Send Message
 	msgLengthBytes := make([]byte, 4)
@@ -62,6 +73,5 @@ func (SRH) Send(msg []byte) {
 	shared.CheckError(err)
 
 	conn.Close()
-	listener.Close()
 }
 

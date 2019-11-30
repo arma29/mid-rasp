@@ -6,20 +6,17 @@ import (
 	"fmt"
 )
 
-
-
 func main() {
 
 	fmt.Println("Queue Server running...")
-
-	go func() {
+	// go func() {
 		// Listen for publish/subscribe requests
 		queueInvoker := invoker.QueueInvoker{Host:shared.QUEUE_SERVER_HOST, Port:shared.QUEUE_SERVER_PORT}
 		queueInvoker.Invoke()
-	}()
+	// }()
 
-	fmt.Scanln()
-	fmt.Println("Queue Server notifying...")
-	// Do notification
+	// Stop main thread
+	messages := make(chan string)
+	<-messages
 	
 }

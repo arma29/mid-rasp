@@ -43,9 +43,7 @@ var listener net.Listener
 var conn net.Conn
 var err error
 
-
 func (crh CRH) Receive() []byte {
-
 
 	listener, err = net.Listen("tcp", crh.ServerHost + ":" + strconv.Itoa(crh.ServerPort))
 	shared.CheckError(err)

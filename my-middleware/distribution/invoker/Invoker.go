@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/arma29/mid-rasp/my-middleware/infrastructure/srh"
 	"github.com/arma29/mid-rasp/my-middleware/distribution/marshaller"
+	"github.com/arma29/mid-rasp/my-middleware/distribution/packet"
 	"github.com/arma29/mid-rasp/my-middleware/distribution/queue"
-
 )
 
 type QueueInvoker struct {
@@ -14,9 +14,39 @@ type QueueInvoker struct {
 }
 
 func (invoker QueueInvoker) Invoke() {
+
 	srhImpl := srh.SRH{ServerHost:invoker.Host, ServerPort:invoker.Port}
 	marshallerImpl := marshaller.Marshaller{}
+	
 	queueServer := queue.QueueServer{}
+
+	// Queue Server Managers
+	subManager := &queueServer.SubManager
+	pubManager := &queueServer.PubManager
+	queueManager := &queueServer.QueueManager
+	notifManager := &queueServer.NotifManager
+
+
+	// Execute Nofitication Event Sender
+	go func () {
+		for {
+			for _, notif := range notifManager.NotificationList {
+				subSRH := srh.SRH{ServerHost: notif.Host, ServerPort: notif.Port}
+
+				pktHeader := packet.PacketHeader{Operation: "notify"}
+				pktBody := packet.PacketBody{Message: notif.Message}
+				pkt := packet.Packet{Header: pktHeader, Body: pktBody}
+
+				pktBytes := marshallerImpl.Marshal(pkt)
+
+
+				subSRH.Send(pktBytes)
+
+				notif.Status = queue.NOTICATION_SENT
+
+			}
+		}
+	}()
 
 	// control loop
 	for {
@@ -25,6 +55,11 @@ func (invoker QueueInvoker) Invoke() {
 
 		// unmarshall request packet
 		packetReceived := marshallerImpl.Unmarshal(rcvMsgBytes)
+		msgReceived := packetReceived.Body.Message
+
+		host := msgReceived.Header.Host
+		port := msgReceived.Header.Port
+		dest := msgReceived.Header.Destination
 
 		// extract operation name
 		operation := packetReceived.Header.Operation
@@ -32,15 +67,12 @@ func (invoker QueueInvoker) Invoke() {
 		// demux request
 		switch operation {
 			case "subscribe" :
-				// Get Message Data
-				msgReceived := packetReceived.Body.Message
-				host := msgReceived.Header.Host
-				port := msgReceived.Header.Port
-				dest := msgReceived.Header.Destination
-
 				// Subscribe to Queue
-				subManager := &queueServer.SubManager
-				subManager.SubscribeRequest(host, port, dest)
+				sub := subManager.SubscribeRequest(host, port, dest)
+
+				// Create Notifications for New Subscriber
+				queue := queueManager.GetQueue(dest)
+				notifManager.NewSubscriberToNotify(*sub, *queue)
 				
 				// Logging Info
 				fmt.Printf("\n")
@@ -57,14 +89,7 @@ func (invoker QueueInvoker) Invoke() {
 				}
 
 			case "publishRequest" :
-				// Get Message Data
-				msgReceived := packetReceived.Body.Message
-				host := msgReceived.Header.Host
-				port := msgReceived.Header.Port
-				dest := msgReceived.Header.Destination
-
 				// Publish to Queue
-				pubManager := &queueServer.PubManager
 				pubManager.PublishRequest(host, port, dest)
 				
 				// Logging Info
@@ -82,19 +107,14 @@ func (invoker QueueInvoker) Invoke() {
 				}
 
 			case "publish" :
-				// Get Message Data
-				msgReceived := packetReceived.Body.Message
-				host := msgReceived.Header.Host
-				port := msgReceived.Header.Port
-				dest := msgReceived.Header.Destination
-
-				// Check if Publisher is authorized
-				// pubManager := &queueServer.PubManager
-
+				// TODO: Check if Publisher is authorized
 
 				// Publish to Queue
-				queueManager := &queueServer.QueueManager
 				queueManager.EnqueueMsg(msgReceived)
+
+				// Create Notification to Subscribers
+				subList := subManager.GetSubscribersByQueue(dest)
+				notifManager.NewMessageToNotify(msgReceived, subList)
 
 				// Logging Info
 				fmt.Printf("\n")
@@ -103,7 +123,7 @@ func (invoker QueueInvoker) Invoke() {
 				fmt.Printf("Invoker Op -> Publish -> Lista de Mensagens na Fila \"%s\" (%d)\n", dest, len(queue.MsgList))
 				for _, msg := range queue.MsgList {
 					fmt.Printf("%s:%d -> %v\n", msg.Header.Host, msg.Header.Port, msg.Body.Content)
-					}
 				}
 		}
 	}
+}

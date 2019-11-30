@@ -35,7 +35,11 @@ func (proxy QueueManagerProxy) Send(op string, content interface{}) {
 
 	// Listen for notifications
 	if (op == "subscribe") {
-		proxy.Receive()
+		go func() {
+			for {
+				proxy.Receive()
+			}
+		}()
 	}
 	
 }
@@ -53,7 +57,7 @@ func (proxy QueueManagerProxy) Receive() message.Message {
 	pkt := marshaller.Unmarshal(pktBytes)
 	msg := pkt.Body.Message
 
-	fmt.Printf("Mensagem Recebida:\n")
+	fmt.Printf("\nMensagem Recebida:\n")
 	fmt.Printf("\t%v", msg)
 
 	return msg
