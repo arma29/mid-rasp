@@ -31,6 +31,11 @@ func (invoker QueueInvoker) Invoke() {
 	go func () {
 		for {
 			for _, notif := range notifManager.NotificationList {
+
+				if notif.Status == queue.NOTICATION_SENT {
+					continue
+				}
+
 				subSRH := srh.SRH{ServerHost: notif.Host, ServerPort: notif.Port}
 
 				pktHeader := packet.PacketHeader{Operation: "notify"}

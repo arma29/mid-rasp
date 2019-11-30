@@ -17,16 +17,16 @@ type Notification struct {
 }
 
 type NotificationManager struct{
-	NotificationList []Notification
+	NotificationList []*Notification
 }
 
 // Append notifications to NotificationList
 func (manager *NotificationManager) addNotification(notif Notification) {
 
 	if (manager.NotificationList == nil) {
-		manager.NotificationList = make([]Notification, 0)
+		manager.NotificationList = make([]*Notification, 0)
 	}
-	manager.NotificationList = append(manager.NotificationList, notif)
+	manager.NotificationList = append(manager.NotificationList, &notif)
 }
 
 
