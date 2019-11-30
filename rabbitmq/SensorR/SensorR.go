@@ -38,7 +38,15 @@ func main() {
 	}
 
 	// Prepara o GPIO
-	initGPIO() // Pin 18
+	rpioErr := rpio.Open()
+	if rpioErr != nil {
+		panic(fmt.Sprint("Unable to open gpio",
+			rpioErr.Error()))
+	}
+	defer rpio.Close()
+
+	pin = rpio.Pin(18)
+	pin.Output()
 
 	user := os.Args[1]
 	password := os.Args[2]
@@ -90,16 +98,7 @@ func main() {
 }
 
 func initGPIO() {
-	// Prepara o GPIO
-	rpioErr := rpio.Open()
-	if rpioErr != nil {
-		panic(fmt.Sprint("Unable to open gpio",
-			rpioErr.Error()))
-	}
-	defer rpio.Close()
 
-	pin = rpio.Pin(18)
-	pin.Output()
 }
 
 func initRabbit() {
