@@ -5,6 +5,7 @@ type QueueServer struct {
 	PubManager PublisherManager
 	SubManager SubscriberManager
 	NotifManager NotificationManager
+	EventNotifManager EventNotification
 }
 
 

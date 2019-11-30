@@ -2,10 +2,10 @@ package invoker
 
 import (
 	"fmt"
-	"github.com/arma29/mid-rasp/my-middleware/infrastructure/srh"
+
 	"github.com/arma29/mid-rasp/my-middleware/distribution/marshaller"
-	"github.com/arma29/mid-rasp/my-middleware/distribution/packet"
 	"github.com/arma29/mid-rasp/my-middleware/distribution/queue"
+	"github.com/arma29/mid-rasp/my-middleware/infrastructure/srh"
 )
 
 type QueueInvoker struct {
@@ -15,9 +15,9 @@ type QueueInvoker struct {
 
 func (invoker QueueInvoker) Invoke() {
 
-	srhImpl := srh.SRH{ServerHost:invoker.Host, ServerPort:invoker.Port}
+	srhImpl := srh.SRH{ServerHost: invoker.Host, ServerPort: invoker.Port}
 	marshallerImpl := marshaller.Marshaller{}
-	
+
 	queueServer := queue.QueueServer{}
 
 	// Queue Server Managers
@@ -25,28 +25,12 @@ func (invoker QueueInvoker) Invoke() {
 	pubManager := &queueServer.PubManager
 	queueManager := &queueServer.QueueManager
 	notifManager := &queueServer.NotifManager
-
-	// Notification Channel
-	notifChannel := make(chan queue.Notification, 100)
-
+	eventNotifManager := &queueServer.EventNotifManager
 
 	// Execute Nofitication Event Sender
-	go func () {
-		for {
-			notif := <- notifChannel
-
-			subSRH := srh.SRH{ServerHost: notif.Host, ServerPort: notif.Port}
-
-			// Create Packet
-			pktHeader := packet.PacketHeader{Operation: "notify"}
-			pktBody := packet.PacketBody{Message: notif.Message}
-			pkt := packet.Packet{Header: pktHeader, Body: pktBody}
-
-			pktBytes := marshallerImpl.Marshal(pkt)
-
-			subSRH.Send(pktBytes)
-		}
-	}()
+	notifChannel := make(chan queue.Notification, 1000)
+	eventNotifManager.SetChannel(notifChannel)
+	go eventNotifManager.SendNotifications()
 
 	// control loop
 	for {
@@ -66,72 +50,82 @@ func (invoker QueueInvoker) Invoke() {
 
 		// demux request
 		switch operation {
-			case "subscribe" :
-				// Subscribe to Queue
-				sub := subManager.SubscribeRequest(host, port, dest)
+		case "subscribe":
+			// Subscribe to Queue
+			subManager.SubscribeRequest(host, port, dest)
 
-				// Create Notifications for New Subscriber
-				queue := queueManager.GetQueue(dest)
-				notifList := notifManager.NewSubscriberToNotify(*sub, *queue)
+			// Logging Info
+			fmt.Printf("\n")
+			fmt.Printf("Invoker Op -> Subscribe -> %s:%d subscribed to \"%s\"\n", host, port, dest)
+			fmt.Printf("Invoker Op -> Subscribe -> Lista de Subscribers (%d)\n", len(subManager.SubList))
+			for _, subscriber := range subManager.SubList {
+				fmt.Printf("%s:%d\n", subscriber.Host, subscriber.Port)
 
-				for _, notif := range notifList {
-					notifChannel <- notif
-				}
-							
-				// Logging Info
-				fmt.Printf("\n")
-				fmt.Printf("Invoker Op -> Subscribe -> %s:%d subscribed to \"%s\"\n", host, port, dest)
-				fmt.Printf("Invoker Op -> Subscribe -> Lista de Subscribers (%d)\n", len(subManager.SubList))
-				for _, subscriber := range subManager.SubList {
-					fmt.Printf("%s:%d\n", subscriber.Host, subscriber.Port)
-
-					for k, v := range subscriber.QueuesSubscribed {
-						if v {
-							fmt.Printf("\t%s\n", k)
-						}
+				for k, v := range subscriber.QueuesSubscribed {
+					if v {
+						fmt.Printf("\t%s\n", k)
 					}
 				}
+			}
 
-			case "publishRequest" :
-				// Publish to Queue
-				pubManager.PublishRequest(host, port, dest)
-				
-				// Logging Info
-				fmt.Printf("\n")
-				fmt.Printf("Invoker Op -> Publish Request -> %s:%d is now a publisher of \"%s\"\n", host, port, dest)
-				fmt.Printf("Invoker Op -> Publish Request -> Lista de Publishers (%d)\n", len(pubManager.PubList))
-				for _, publisher := range pubManager.PubList {
-					fmt.Printf("%s:%d\n", publisher.Host, publisher.Port)
+		case "publishRequest":
+			// Publish to Queue
+			pubManager.PublishRequest(host, port, dest)
 
-					for k, v := range publisher.PublishQueues {
-						if v {
-							fmt.Printf("\t%s\n", k)
-						}
+			// Logging Info
+			fmt.Printf("\n")
+			fmt.Printf("Invoker Op -> Publish Request -> %s:%d is now a publisher of \"%s\"\n", host, port, dest)
+			fmt.Printf("Invoker Op -> Publish Request -> Lista de Publishers (%d)\n", len(pubManager.PubList))
+			for _, publisher := range pubManager.PubList {
+				fmt.Printf("%s:%d\n", publisher.Host, publisher.Port)
+
+				for k, v := range publisher.PublishQueues {
+					if v {
+						fmt.Printf("\t%s\n", k)
 					}
 				}
+			}
 
-			case "publish" :
-				// TODO: Check if Publisher is authorized
+		case "publish":
+			//Check if Publisher is authorized
+			publisher, exists := pubManager.GetPublisher(host, port)
+			if !exists {
+				break
+			}
 
-				// Publish to Queue
-				queueManager.EnqueueMsg(msgReceived)
+			if publisher.PublishQueues == nil {
+				break
+			}
 
-				// Create Notification to Subscribers
-				subList := subManager.GetSubscribersByQueue(dest)
-				notifList := notifManager.NewMessageToNotify(msgReceived, subList)
+			if !publisher.PublishQueues[dest] {
+				break
+			}
 
-				for _, notif := range notifList {
-					notifChannel <- notif
-				}
+			// Publish to Queue
+			queueManager.EnqueueMsg(msgReceived)
 
-				// Logging Info
-				fmt.Printf("\n")
-				fmt.Printf("Invoker Op -> Publish -> %s:%d has published in \"%s\"\n", host, port, dest)
-				queue := queueManager.GetQueue(dest)
-				fmt.Printf("Invoker Op -> Publish -> Lista de Mensagens na Fila \"%s\" (%d)\n", dest, len(queue.MsgList))
-				for _, msg := range queue.MsgList {
-					fmt.Printf("%s:%d -> %v\n", msg.Header.Host, msg.Header.Port, msg.Body.Content)
-				}
+			// Create Notification to Subscribers
+			if !queueManager.IsEmpty(dest) {
+				break
+			}
+
+			msg := queueManager.DequeueMsg(dest)
+			subList := subManager.GetSubscribersByQueue(dest)
+
+			notifList := notifManager.NewMessageToNotify(msg, subList)
+
+			for _, notif := range notifList {
+				notifChannel <- notif
+			}
+
+			// Logging Info
+			fmt.Printf("\n")
+			fmt.Printf("Invoker Op -> Publish -> %s:%d has published in \"%s\"\n", host, port, dest)
+			queue := queueManager.GetQueue(dest)
+			fmt.Printf("Invoker Op -> Publish -> Lista de Mensagens na Fila \"%s\" (%d)\n", dest, len(queue.MsgList))
+			for _, msg := range queue.MsgList {
+				fmt.Printf("%s:%d -> %v\n", msg.Header.Host, msg.Header.Port, msg.Body.Content)
+			}
 		}
 	}
 }

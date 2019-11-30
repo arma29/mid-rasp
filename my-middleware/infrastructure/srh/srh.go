@@ -48,7 +48,7 @@ func (srh SRH) Receive() []byte {
 }
 
 
-func (srh SRH) Send(msg []byte) {
+func (srh SRH) Send(msg []byte) error {
 
 	var conn net.Conn
 	var err error
@@ -61,17 +61,24 @@ func (srh SRH) Send(msg []byte) {
 		}
 	}
 
+	defer conn.Close()
+
 	// Send Message
 	msgLengthBytes := make([]byte, 4)
 	msgLength := uint32(len(msg))
 
+
 	binary.LittleEndian.PutUint32(msgLengthBytes, msgLength)
 	_ , err = conn.Write(msgLengthBytes)
-	shared.CheckError(err)
-
+	if err != nil {
+		return err
+	}
+		
 	_, err = conn.Write(msg)
-	shared.CheckError(err)
+	if err != nil {
+		return err
+	}
 
-	conn.Close()
+	return err
 }
 
