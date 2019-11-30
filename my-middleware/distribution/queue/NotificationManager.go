@@ -31,12 +31,16 @@ func (manager *NotificationManager) addNotification(notif Notification) {
 
 
 // Create new Notifications for all subscribers for that message destination
-func (manager *NotificationManager) NewMessageToNotify(msg message.Message, subList []Subscriber) {
+func (manager *NotificationManager) NewMessageToNotify(msg message.Message, subList []Subscriber) []Notification {
 
+	notifList := make([]Notificiation, 0)
 	for _, sub := range subList {
 		notif := Notification{Host:sub.Host, Port:sub.Port, Status: NOTIFICATION_READY, Message:msg}
-		manager.addNotification(notif)
+		notifList = notifList.append(notifList, notif)
+		//manager.addNotification(notif)
 	}
+
+	return notifList
 }
 
 
@@ -48,7 +52,7 @@ func (manager *NotificationManager) NewSubscriberToNotify(sub Subscriber, queue 
 	if len(msgList) > 0 {
 		for _, msg := range msgList {
 			notif := Notification{Host:sub.Host, Port:sub.Port, Status:NOTIFICATION_READY, Message: msg}
-			manager.addNotification(notif)
+			//manager.addNotification(notif)
 		}
 	}
 }

@@ -16,7 +16,7 @@ func main() {
 	// }()
 
 	// Stop main thread
-	messages := make(chan string)
-	<-messages
+	wait := make(chan string)
+	<-wait
 	
 }

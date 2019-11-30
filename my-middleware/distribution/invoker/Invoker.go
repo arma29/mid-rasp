@@ -26,29 +26,26 @@ func (invoker QueueInvoker) Invoke() {
 	queueManager := &queueServer.QueueManager
 	notifManager := &queueServer.NotifManager
 
+	// Notification Channel
+	notifChannel := make(chan queue.Notification)
+
 
 	// Execute Nofitication Event Sender
 	go func () {
 		for {
-			for _, notif := range notifManager.NotificationList {
-
-				if notif.Status == queue.NOTICATION_SENT {
-					continue
-				}
+				notif := <- notifChannel
 
 				subSRH := srh.SRH{ServerHost: notif.Host, ServerPort: notif.Port}
 
+				// Create Packet
 				pktHeader := packet.PacketHeader{Operation: "notify"}
 				pktBody := packet.PacketBody{Message: notif.Message}
 				pkt := packet.Packet{Header: pktHeader, Body: pktBody}
 
 				pktBytes := marshallerImpl.Marshal(pkt)
 
-
 				subSRH.Send(pktBytes)
-
-				notif.Status = queue.NOTICATION_SENT
-
+				// notif.Status = queue.NOTICATION_SENT
 			}
 		}
 	}()
@@ -119,7 +116,11 @@ func (invoker QueueInvoker) Invoke() {
 
 				// Create Notification to Subscribers
 				subList := subManager.GetSubscribersByQueue(dest)
-				notifManager.NewMessageToNotify(msgReceived, subList)
+				notifList := notifManager.NewMessageToNotify(msgReceived, subList)
+
+				for _, notif := range notifList {
+					notifChannel <- notif
+				}
 
 				// Logging Info
 				fmt.Printf("\n")
