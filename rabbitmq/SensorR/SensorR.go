@@ -12,6 +12,7 @@ import (
 	rad "github.com/arma29/mid-rasp/radiation"
 	queue "github.com/arma29/mid-rasp/sensorqueue"
 	"github.com/arma29/mid-rasp/shared"
+	"github.com/stianeikeland/go-rpio"
 )
 
 var (
@@ -25,6 +26,8 @@ var (
 
 	amqpURI string
 	err     error
+
+	pin rpio.Pin
 )
 
 func main() {
@@ -33,6 +36,17 @@ func main() {
 		fmt.Printf("Missing arguments: %s number\n", os.Args[0])
 		os.Exit(1)
 	}
+
+	// Prepara o GPIO
+	rpioErr := rpio.Open()
+	if rpioErr != nil {
+		panic(fmt.Sprint("Unable to open gpio",
+			rpioErr.Error()))
+	}
+	defer rpio.Close()
+
+	pin = rpio.Pin(18)
+	pin.Output()
 
 	user := os.Args[1]
 	password := os.Args[2]
@@ -74,9 +88,16 @@ func main() {
 				go waitMsgs(msgsFromServer)
 			}
 		}
+		// Já deixa o LED apagado
+		pin.Low()
+
 		// Garantir taxa máxima
 		time.Sleep(shared.REAL_TIME)
 	}
+
+}
+
+func initGPIO() {
 
 }
 
@@ -124,7 +145,9 @@ func waitMsgs(ch <-chan amqp.Delivery) {
 		fmt.Printf("Falha registrada em: ")
 		fmt.Println(time.Unix(0, msgReply.Timestamp))
 
-		// Acender o Led GPIO lib
+		// Acende o LED
+		pin.High()
+
 	}
 }
 
