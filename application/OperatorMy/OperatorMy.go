@@ -2,16 +2,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/arma29/mid-rasp/my-middleware/distribution/queue"
-	"github.com/mitchellh/mapstructure"
-	rad "github.com/arma29/mid-rasp/radiation"
+	"os"
 	"time"
+
+	"github.com/arma29/mid-rasp/my-middleware/distribution/queue"
+	rad "github.com/arma29/mid-rasp/radiation"
+	"github.com/mitchellh/mapstructure"
 )
 
 func main() {
 
+	if len(os.Args) != 2 {
+		fmt.Println("Missing arguments")
+		os.Exit(1)
+	}
 	// Operator Info
-	OPERATOR_HOST := "localhost"
+	OPERATOR_HOST := os.Args[1]
 	OPERATOR_PORT := 9004
 	RADIATION_QUEUE := "radiation"
 	ALERT_QUEUE := "alert"
@@ -31,36 +37,38 @@ func main() {
 
 	// Stop main thread
 	wait := make(chan string)
-	<- wait
+	<-wait
 }
 
 func GetRadiation(radChannel chan interface{}, dangerRadChannel chan bool) {
 
+	fmt.Println("Time")
 	for res := range radChannel {
 		// Get RadiationStruct
 		radiation := rad.Radiation{}
 		mapstructure.Decode(res, &radiation)
 
 		value := radiation.Value
-		timestamp := radiation.Timestamp
+
+		// Medindo o tempo
+		t1 := time.Now().UnixNano()
+		t2 := radiation.Timestamp
+		s := fmt.Sprintf("%d", t1-t2)
+		fmt.Println(s)
 
 		// Check if Radiation is Dangerous
 		dangerRadChannel <- rad.IsRadiationDangerous(value)
-
-		timeSTR := time.Unix(0, timestamp)
-		fmt.Printf("\n\nValor: %f\nTimeStamp:%s", value, timeSTR)
 	}
 
 }
 
-
 func SentAlert(alertQueueProxy queue.QueueManagerProxy, dangerRadChannel chan bool) {
 
 	for res := range dangerRadChannel {
-		validator := rad.Validator{IsDangerous:res, Timestamp: time.Now().UnixNano()}
+		validator := rad.Validator{IsDangerous: res, Timestamp: time.Now().UnixNano()}
 		alertQueueProxy.Send("publish", validator)
 
-		fmt.Printf("\nIsDangerous: ")
-		fmt.Println(res)
+		// fmt.Printf("\nIsDangerous: ")
+		// fmt.Println(res)
 	}
 }
