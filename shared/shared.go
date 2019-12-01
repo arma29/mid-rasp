@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const SAMPLE_SIZE = 10000 // Warm-up: 30% , Post: 10%
+const SAMPLE_SIZE = 10000 // Warm-up: 10% , Post: 10%
 const RABBITMQ_PORT = 5672
 
 const QUEUE_SERVER_HOST = "localhost"
