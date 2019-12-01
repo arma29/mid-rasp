@@ -30,7 +30,6 @@ func main() {
 	// Keep process running
 	wait := make(chan int)
 	<- wait
-
 }
 
 
@@ -49,7 +48,7 @@ func PublishRadiation(proxy queue.QueueManagerProxy) {
 		fmt.Println("\nDado de radiação enviado:")
 		fmt.Printf("\t%v\n", radValue)
 
-		sleepDuration, _ := time.ParseDuration("1ms")
+		sleepDuration, _ := time.ParseDuration("10s")
 		time.Sleep(sleepDuration)
 	}
 }
@@ -76,6 +75,5 @@ func OnAlert(alertChannel chan interface{}) {
 			fmt.Printf("Falha registrada em: ")
 			fmt.Println(time.Unix(0, validator.Timestamp))
 		}
-		
 	}
 }

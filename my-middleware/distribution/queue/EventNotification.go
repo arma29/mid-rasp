@@ -20,7 +20,6 @@ func (manager *EventNotification) SendNotifications() {
 
 	for {
 		notif := <-manager.NotifChannel
-
 		subSRH := srh.SRH{ServerHost: notif.Host, ServerPort: notif.Port}
 
 		// Create Packet
@@ -34,6 +33,5 @@ func (manager *EventNotification) SendNotifications() {
 		if err != nil {
 			manager.NotifChannel <- notif
 		}
-
 	}
 }
