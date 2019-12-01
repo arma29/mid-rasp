@@ -12,7 +12,7 @@ import (
 	rad "github.com/arma29/mid-rasp/radiation"
 	queue "github.com/arma29/mid-rasp/sensorqueue"
 	"github.com/arma29/mid-rasp/shared"
-	"github.com/stianeikeland/go-rpio"
+	// "github.com/stianeikeland/go-rpio"
 )
 
 var (
@@ -27,7 +27,7 @@ var (
 	amqpURI string
 	err     error
 
-	pin rpio.Pin
+	// pin rpio.Pin
 )
 
 func main() {
@@ -38,15 +38,15 @@ func main() {
 	}
 
 	// Prepara o GPIO
-	rpioErr := rpio.Open()
-	if rpioErr != nil {
-		panic(fmt.Sprint("Unable to open gpio",
-			rpioErr.Error()))
-	}
-	defer rpio.Close()
+	// rpioErr := rpio.Open()
+	// if rpioErr != nil {
+	// 	panic(fmt.Sprint("Unable to open gpio",
+	// 		rpioErr.Error()))
+	// }
+	// defer rpio.Close()
 
-	pin = rpio.Pin(18)
-	pin.Output()
+	// pin = rpio.Pin(18)
+	// pin.Output()
 
 	user := os.Args[1]
 	password := os.Args[2]
@@ -68,7 +68,7 @@ func main() {
 	// inicia fila de armazenamento do sensor
 	queue.InitQueue()
 	// loop de enviar
-	for i := 0; i < 100; i++ {
+	for i := 0; i < shared.SAMPLE_SIZE; i++ {
 
 		queue.Enqueue(rad.Radiation{Value: rad.GenerateRadiationValue(),
 			Timestamp: time.Now().UnixNano()})
@@ -89,10 +89,10 @@ func main() {
 			}
 		}
 		// Já deixa o LED apagado
-		pin.Low()
+		// pin.Low()
 
 		// Garantir taxa máxima
-		time.Sleep(shared.REAL_TIME)
+		// time.Sleep(shared.REAL_TIME)
 	}
 
 }
@@ -142,11 +142,11 @@ func waitMsgs(ch <-chan amqp.Delivery) {
 		msgReply := rad.Validator{}
 		err := json.Unmarshal([]byte(res.Body), &msgReply)
 		shared.CheckError(err)
-		fmt.Printf("Falha registrada em: ")
-		fmt.Println(time.Unix(0, msgReply.Timestamp))
+		// fmt.Printf("Falha registrada em: ")
+		// fmt.Println(time.Unix(0, msgReply.Timestamp))
 
 		// Acende o LED
-		pin.High()
+		// pin.High()
 
 	}
 }
@@ -158,8 +158,8 @@ func parseQueue() {
 		msgRequest := queue.Peek()
 		msgRequestBytes, err := json.Marshal(msgRequest)
 		shared.CheckError(err)
-		fmt.Printf("Estrutura Enviada: ")
-		fmt.Println(msgRequest)
+		// fmt.Printf("Estrutura Enviada: ")
+		// fmt.Println(msgRequest)
 
 		// publica request <-> fila de envio
 		err = rabbitChannel.Publish("", requestQueue.Name, false, false,
