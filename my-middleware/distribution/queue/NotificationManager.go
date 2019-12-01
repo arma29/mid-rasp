@@ -25,5 +25,23 @@ func (manager *NotificationManager) NewMessageToNotify(msg message.Message, subL
 	return notifList
 }
 
+
+// Create new Notifications for all messages in the Queue that sub has subscribed
+func (manager *NotificationManager) NewSubscriberToNotify(sub Subscriber, queue Queue) []Notification {
+
+	msgList := queue.MsgList
+	notifList := make([]Notification, 0)
+
+	if len(msgList) > 0 {
+		for _, msg := range msgList {
+			notif := Notification{Host:sub.Host, Port:sub.Port, Message: msg}
+			notifList = append(notifList, notif)
+		}
+	}
+
+	return notifList
+}
+
+
 // TODO: Function to clean old notifications
 // TODO: Implement function to clean Old	 Messages From Queue

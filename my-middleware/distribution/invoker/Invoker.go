@@ -52,7 +52,15 @@ func (invoker QueueInvoker) Invoke() {
 		switch operation {
 		case "subscribe":
 			// Subscribe to Queue
-			subManager.SubscribeRequest(host, port, dest)
+			sub := subManager.SubscribeRequest(host, port, dest)
+
+			// Create Notifications for New Subscriber
+			queue := queueManager.GetQueue(dest)
+			notifList := notifManager.NewSubscriberToNotify(*sub, *queue)
+
+			for _, notif := range notifList {
+				notifChannel <- notif
+			}
 
 			// Logging Info
 			fmt.Printf("\n")
@@ -105,19 +113,11 @@ func (invoker QueueInvoker) Invoke() {
 			queueManager.EnqueueMsg(msgReceived)
 
 			// Create Notification to Subscribers
-			if !queueManager.IsEmpty(dest) {
+			if queueManager.IsEmpty(dest) {
 				break
 			}
 
-			msg := queueManager.DequeueMsg(dest)
-			subList := subManager.GetSubscribersByQueue(dest)
-
-			notifList := notifManager.NewMessageToNotify(msg, subList)
-
-			for _, notif := range notifList {
-				notifChannel <- notif
-			}
-
+			
 			// Logging Info
 			fmt.Printf("\n")
 			fmt.Printf("Invoker Op -> Publish -> %s:%d has published in \"%s\"\n", host, port, dest)
@@ -126,6 +126,16 @@ func (invoker QueueInvoker) Invoke() {
 			for _, msg := range queue.MsgList {
 				fmt.Printf("%s:%d -> %v\n", msg.Header.Host, msg.Header.Port, msg.Body.Content)
 			}
+
+			subList := subManager.GetSubscribersByQueue(dest)
+
+			notifList := notifManager.NewMessageToNotify(msgReceived, subList)
+
+			for _, notif := range notifList {
+				notifChannel <- notif
+			}
+
+
 		}
 	}
 }
