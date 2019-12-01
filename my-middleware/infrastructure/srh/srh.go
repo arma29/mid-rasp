@@ -13,55 +13,57 @@ type SRH struct {
 }
 
 var listener net.Listener
-var conn net.Conn
-var err error
+var connReceive net.Conn
+var errReceive error
 
-func (srh SRH) Receive() []byte {
+func (srh SRH) Receive() ([]byte, error) {
 
-	listener, err = net.Listen("tcp", srh.ServerHost + ":" + strconv.Itoa(srh.ServerPort))
-	shared.CheckError(err)
+	listener, errReceive = net.Listen("tcp", srh.ServerHost + ":" + strconv.Itoa(srh.ServerPort))
+	shared.CheckError(errReceive)
 
-	// Remenber to close connection
 	defer listener.Close()
 
 	for {
-		conn, err = listener.Accept()
-		if err == nil {
+		connReceive, errReceive = listener.Accept()
+		if errReceive == nil && connReceive != nil{
 			break
 		}
 	}
 
+	defer connReceive.Close()
+
 	// Receive Message
 	pktLengthBytes := make([]byte, 4)
-	_, err = conn.Read(pktLengthBytes)
-	shared.CheckError(err)
+	_, errReceive = connReceive.Read(pktLengthBytes)
+	// shared.CheckError(errReceive)
+
 
 	pktLength := binary.LittleEndian.Uint32(pktLengthBytes)
 
 	// receive message
 	pkt := make([]byte, pktLength)
-	_, err = conn.Read(pkt)
-	shared.CheckError(err)
+	_, errReceive = connReceive.Read(pkt)
+	// shared.CheckError(errReceive)
 
-	return pkt
-	
+
+	return pkt, errReceive
 }
 
 
 func (srh SRH) Send(msg []byte) error {
 
-	var conn net.Conn
-	var err error
+	var connSend net.Conn
+	var errSend error
 
 	for {
-		conn, err = net.Dial("tcp", srh.ServerHost + ":" + strconv.Itoa(srh.ServerPort))
+		connSend, errSend = net.Dial("tcp", srh.ServerHost + ":" + strconv.Itoa(srh.ServerPort))
 
-		if err == nil && conn != nil {
+		if errSend == nil && connSend != nil {
 			break
 		}
 	}
 
-	defer conn.Close()
+	defer connSend.Close()
 
 	// Send Message
 	msgLengthBytes := make([]byte, 4)
@@ -69,16 +71,16 @@ func (srh SRH) Send(msg []byte) error {
 
 
 	binary.LittleEndian.PutUint32(msgLengthBytes, msgLength)
-	_ , err = conn.Write(msgLengthBytes)
-	if err != nil {
-		return err
+	_ , errSend = connSend.Write(msgLengthBytes)
+	if errSend != nil {
+		return errSend
 	}
 		
-	_, err = conn.Write(msg)
-	if err != nil {
-		return err
+	_, errSend = connSend.Write(msg)
+	if errSend != nil {
+		return errSend
 	}
 
-	return err
+	return errSend
 }
 

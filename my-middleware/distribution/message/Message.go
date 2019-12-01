@@ -1,8 +1,6 @@
 package message
 
-import (
-	"time"
-)
+import ()
 
 type Message struct {
 	Header MessageHeader;
@@ -17,7 +15,7 @@ type MessageHeader struct {
 	Enterprise string;
 	SensorID string;
 	Priority int;
-	ExpirationDate time.Duration;
+	ExpirationDate int64;
 }
 
 

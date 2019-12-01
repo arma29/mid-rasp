@@ -12,62 +12,67 @@ type CRH struct {
 	ServerPort int
 }
 
-func (crh CRH) Send(msg []byte) {
 
-	var conn net.Conn
-	var err error
+
+func (crh CRH) Send(msg []byte) error {
+
+	var connSend net.Conn
+	var errSend error
 
 	for {
-		conn, err = net.Dial("tcp", crh.ServerHost + ":" + strconv.Itoa(crh.ServerPort))
+		connSend, errSend = net.Dial("tcp", crh.ServerHost + ":" + strconv.Itoa(crh.ServerPort))
 
-		if err == nil && conn != nil {
+		if errSend == nil && connSend != nil {
 			break
 		}
 	}
+
+	defer connSend.Close()
 
 	// Send message to Server
 	msgLengthBytes := make([]byte, 4)
 	length := uint32(len(msg))
 
 	binary.LittleEndian.PutUint32(msgLengthBytes, length)
-	_, err = conn.Write(msgLengthBytes)
-	shared.CheckError(err)
+	_, errSend = connSend.Write(msgLengthBytes)
 	
-	_, err = conn.Write(msg)
-	shared.CheckError(err)
+	_, errSend = connSend.Write(msg)
 
-	conn.Close()
+
+	return errSend
 }
 
 var listener net.Listener
-var conn net.Conn
-var err error
+var connReceive net.Conn
+var errReceive error
 
 func (crh CRH) Receive() []byte {
 
-	listener, err = net.Listen("tcp", crh.ServerHost + ":" + strconv.Itoa(crh.ServerPort))
-	shared.CheckError(err)
+	listener, errReceive = net.Listen("tcp", crh.ServerHost + ":" + strconv.Itoa(crh.ServerPort))
+	shared.CheckError(errReceive)
 
 	defer listener.Close()
 
 	for {
-		conn, err = listener.Accept()
-		if err == nil {
+		connReceive, errReceive = listener.Accept()
+		if errReceive == nil && connReceive != nil {
 			break
 		}
 	}
 
+	defer connReceive.Close()
+
 	// Receive Message
 	pktLengthBytes := make([]byte, 4)
-	_, err = conn.Read(pktLengthBytes)
-	shared.CheckError(err)
+	_, errReceive = connReceive.Read(pktLengthBytes)
+	shared.CheckError(errReceive)
 	
 	pktLength := binary.LittleEndian.Uint32(pktLengthBytes)
 	
 	// receive message
 	pkt := make([]byte, pktLength)
-	_, err = conn.Read(pkt)
-	shared.CheckError(err)
+	_, errReceive = connReceive.Read(pkt)
+	shared.CheckError(errReceive)
 	
 	return pkt
 }

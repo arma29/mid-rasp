@@ -11,13 +11,16 @@ func main() {
 	fmt.Println("Queue Server running...")
 	
 	// Listen for publish/subscribe requests
-	go func() {
-		queueInvoker := invoker.QueueInvoker{Host:shared.QUEUE_SERVER_HOST, Port:shared.QUEUE_SERVER_PORT}
-		queueInvoker.Invoke()
-	}()
+	go startQueueServerInstance()
 
 	// Maintain process running
 	wait := make(chan string)
 	<-wait
 	
+}
+
+
+func startQueueServerInstance() {
+	queueInvoker := invoker.QueueInvoker{Host:shared.QUEUE_SERVER_HOST, Port:shared.QUEUE_SERVER_PORT}
+	queueInvoker.Invoke()
 }

@@ -35,10 +35,14 @@ func (invoker QueueInvoker) Invoke() {
 	// control loop
 	for {
 		// receive request packet
-		rcvMsgBytes := srhImpl.Receive()
+		rcvPktBytes, err := srhImpl.Receive()
+
+		for err != nil {
+			rcvPktBytes, err = srhImpl.Receive()
+		}
 
 		// unmarshall request packet
-		packetReceived := marshallerImpl.Unmarshal(rcvMsgBytes)
+		packetReceived := marshallerImpl.Unmarshal(rcvPktBytes)
 		msgReceived := packetReceived.Body.Message
 
 		host := msgReceived.Header.Host
@@ -134,7 +138,6 @@ func (invoker QueueInvoker) Invoke() {
 			for _, notif := range notifList {
 				notifChannel <- notif
 			}
-
 
 		}
 	}

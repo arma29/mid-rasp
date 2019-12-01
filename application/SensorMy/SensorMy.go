@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/arma29/mid-rasp/my-middleware/distribution/queue"
 	rad "github.com/arma29/mid-rasp/radiation"
+	"github.com/mitchellh/mapstructure"
+	// "github.com/stianeikeland/go-rpio"
 	"time"
 	"fmt"
 )
@@ -15,34 +17,65 @@ func main() {
 	RADIATION_QUEUE := "radiation"
 	ALERT_QUEUE := "alert"
 
-	// Object responsable for delievering message to queue
+	// Radiation Publish Queue
 	radQueueProxy := queue.QueueManagerProxy{Host: SENSOR_HOST, Port: SENSOR_PORT, QueueName: RADIATION_QUEUE}
 	radQueueProxy.Send("publishRequest", nil)
+	go PublishRadiation(radQueueProxy)
 
-	// Published Data
-	radQueueProxy.Send("publish", rad.Radiation{Value: 5, Timestamp: 0})
-	// radQueueProxy.Send("publish", rad.Radiation{Value: 9})
-
-	// Alert Queue
+	// Alert Subscribe Queue
 	alertQueueProxy := queue.QueueManagerProxy{Host: SENSOR_HOST, Port: SENSOR_PORT, QueueName: ALERT_QUEUE}
-	go OnAlert(alertQueueProxy.Subscribe())
+	alertChannel := alertQueueProxy.Subscribe()
+	go OnAlert(alertChannel)
+
+	// Keep process running
+	wait := make(chan int)
+	<- wait
 
 }
 
 
 
-func sendRadiation(ch <-chan interface{} ) {
+func PublishRadiation(proxy queue.QueueManagerProxy) {
 	
-	fmt.Println("Alerta de Radiação Disparado!")
+	for {
+		// Radiation data
+		value := rad.GenerateRadiationValue()
+		timetamp := time.Now().UnixNano()
+		radValue := rad.Radiation{Value: value, Timestamp: timetamp}
+
+		// Publish Radiation data
+		proxy.Send("publish", radValue)
+
+		fmt.Println("\nDado de radiação enviado:")
+		fmt.Printf("\t%v\n", radValue)
+
+		sleepDuration, _ := time.ParseDuration("1ms")
+		time.Sleep(sleepDuration)
+	}
 }
 
 
-func OnAlert(ch <-chan interface{}) {
-	for res := range ch {
-		validator := res.(rad.Validator)
+func OnAlert(alertChannel chan interface{}) {
+
+	// Prepara o GPIO
+	// rpioErr := rpio.Open()
+	// if rpioErr != nil {
+		// panic(fmt.Sprint("Unable to open gpio", rpioErr.Error()))
+	// }
+
+	// defer rpio.Close()
+
+	// pin := rpio.Pin(18)
+	// pin.Output()
+
+	for res := range alertChannel {
+		validator := rad.Validator{}
+		mapstructure.Decode(res, &validator)
+
 		if validator.IsDangerous {
 			fmt.Printf("Falha registrada em: ")
 			fmt.Println(time.Unix(0, validator.Timestamp))
 		}
+		
 	}
 }
