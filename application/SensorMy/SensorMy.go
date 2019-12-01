@@ -80,6 +80,5 @@ func OnAlert(alertChannel chan interface{}) {
 			// Acende o LED
 			// pin.High()
 		}
-
 	}
 }

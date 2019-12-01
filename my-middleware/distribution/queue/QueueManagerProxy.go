@@ -23,7 +23,7 @@ func (proxy QueueManagerProxy) Send(op string, content interface{}) {
 	crh := crh.CRH{ServerHost: shared.QUEUE_SERVER_HOST, ServerPort: shared.QUEUE_SERVER_PORT }
 	marshaller := marshaller.Marshaller{}
 
-	msgTimeValidation := time.Now().UnixNano()
+	msgTimeValidation := time.Now().Add(1 * time.Minute).UnixNano()
 	msgHeader := message.MessageHeader{
 		Host: proxy.Host, 
 		Port: proxy.Port, 
@@ -67,7 +67,7 @@ func (proxy QueueManagerProxy) Subscribe() chan interface{} {
 
 	crh.Send(marshaller.Marshal(pkt))
 
-	//TODO: Check if subscription was successful
+	// TODO: Check if subscription was successful
 
 	// Notification Channel
 	contentChannel := make(chan interface{}, 100)
