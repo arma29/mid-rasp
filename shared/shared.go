@@ -9,7 +9,7 @@ import (
 const SAMPLE_SIZE = 1000 // Warm-up: 10% , Post: 10%
 const RABBITMQ_PORT = 5672
 
-const QUEUE_SERVER_HOST = "localhost"
+const QUEUE_SERVER_HOST = "192.168.43.31"
 const QUEUE_SERVER_PORT = 7574
 
 const REAL_TIME = 5 * time.Second
