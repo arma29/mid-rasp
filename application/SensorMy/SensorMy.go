@@ -44,6 +44,8 @@ func main() {
 	// wait := make(chan int)
 	// <-wait
 
+	time.Sleep(10 * time.Second)
+
 }
 
 func PublishRadiation(proxy queue.QueueManagerProxy) {
