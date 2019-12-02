@@ -1,9 +1,10 @@
 package crh
 
 import (
+	"encoding/binary"
 	"net"
 	"strconv"
-	"encoding/binary"
+
 	"github.com/arma29/mid-rasp/shared"
 )
 
@@ -12,15 +13,13 @@ type CRH struct {
 	ServerPort int
 }
 
-
-
 func (crh CRH) Send(msg []byte) error {
 
 	var connSend net.Conn
 	var errSend error
 
 	for {
-		connSend, errSend = net.Dial("tcp", crh.ServerHost + ":" + strconv.Itoa(crh.ServerPort))
+		connSend, errSend = net.Dial("tcp", crh.ServerHost+":"+strconv.Itoa(crh.ServerPort))
 
 		if errSend == nil && connSend != nil {
 			break
@@ -35,9 +34,12 @@ func (crh CRH) Send(msg []byte) error {
 
 	binary.LittleEndian.PutUint32(msgLengthBytes, length)
 	_, errSend = connSend.Write(msgLengthBytes)
-	
-	_, errSend = connSend.Write(msg)
 
+	if errSend != nil {
+		return errSend
+	}
+
+	_, errSend = connSend.Write(msg)
 
 	return errSend
 }
@@ -48,7 +50,7 @@ var errReceive error
 
 func (crh CRH) Receive() []byte {
 
-	listener, errReceive = net.Listen("tcp", crh.ServerHost + ":" + strconv.Itoa(crh.ServerPort))
+	listener, errReceive = net.Listen("tcp", crh.ServerHost+":"+strconv.Itoa(crh.ServerPort))
 	shared.CheckError(errReceive)
 
 	defer listener.Close()
@@ -66,13 +68,13 @@ func (crh CRH) Receive() []byte {
 	pktLengthBytes := make([]byte, 4)
 	_, errReceive = connReceive.Read(pktLengthBytes)
 	shared.CheckError(errReceive)
-	
+
 	pktLength := binary.LittleEndian.Uint32(pktLengthBytes)
-	
+
 	// receive message
 	pkt := make([]byte, pktLength)
 	_, errReceive = connReceive.Read(pkt)
 	shared.CheckError(errReceive)
-	
+
 	return pkt
 }

@@ -1,9 +1,10 @@
 package srh
 
 import (
+	"encoding/binary"
 	"net"
 	"strconv"
-	"encoding/binary"
+
 	"github.com/arma29/mid-rasp/shared"
 )
 
@@ -18,14 +19,14 @@ var errReceive error
 
 func (srh SRH) Receive() ([]byte, error) {
 
-	listener, errReceive = net.Listen("tcp", srh.ServerHost + ":" + strconv.Itoa(srh.ServerPort))
+	listener, errReceive = net.Listen("tcp", srh.ServerHost+":"+strconv.Itoa(srh.ServerPort))
 	shared.CheckError(errReceive)
 
 	defer listener.Close()
 
 	for {
 		connReceive, errReceive = listener.Accept()
-		if errReceive == nil && connReceive != nil{
+		if errReceive == nil && connReceive != nil {
 			break
 		}
 	}
@@ -36,19 +37,22 @@ func (srh SRH) Receive() ([]byte, error) {
 	pktLengthBytes := make([]byte, 4)
 	_, errReceive = connReceive.Read(pktLengthBytes)
 	// shared.CheckError(errReceive)
-
+	if errReceive != nil {
+		return nil, errReceive
+	}
 
 	pktLength := binary.LittleEndian.Uint32(pktLengthBytes)
 
 	// receive message
 	pkt := make([]byte, pktLength)
 	_, errReceive = connReceive.Read(pkt)
+	if errReceive != nil {
+		return nil, errReceive
+	}
 	// shared.CheckError(errReceive)
-
 
 	return pkt, errReceive
 }
-
 
 func (srh SRH) Send(msg []byte) error {
 
@@ -56,7 +60,7 @@ func (srh SRH) Send(msg []byte) error {
 	var errSend error
 
 	for {
-		connSend, errSend = net.Dial("tcp", srh.ServerHost + ":" + strconv.Itoa(srh.ServerPort))
+		connSend, errSend = net.Dial("tcp", srh.ServerHost+":"+strconv.Itoa(srh.ServerPort))
 
 		if errSend == nil && connSend != nil {
 			break
@@ -69,13 +73,12 @@ func (srh SRH) Send(msg []byte) error {
 	msgLengthBytes := make([]byte, 4)
 	msgLength := uint32(len(msg))
 
-
 	binary.LittleEndian.PutUint32(msgLengthBytes, msgLength)
-	_ , errSend = connSend.Write(msgLengthBytes)
+	_, errSend = connSend.Write(msgLengthBytes)
 	if errSend != nil {
 		return errSend
 	}
-		
+
 	_, errSend = connSend.Write(msg)
 	if errSend != nil {
 		return errSend
@@ -83,4 +86,3 @@ func (srh SRH) Send(msg []byte) error {
 
 	return errSend
 }
-
