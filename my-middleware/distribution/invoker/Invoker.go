@@ -1,6 +1,8 @@
 package invoker
 
 import (
+	"fmt"
+
 	"github.com/arma29/mid-rasp/my-middleware/distribution/marshaller"
 	"github.com/arma29/mid-rasp/my-middleware/distribution/queue"
 	"github.com/arma29/mid-rasp/my-middleware/infrastructure/srh"
@@ -65,36 +67,36 @@ func (invoker QueueInvoker) Invoke() {
 			}
 
 			// Logging Info
-			// fmt.Printf("\n")
-			// fmt.Printf("Invoker Op -> Subscribe -> %s:%d subscribed to \"%s\"\n", host, port, dest)
-			// fmt.Printf("Invoker Op -> Subscribe -> Lista de Subscribers (%d)\n", len(subManager.SubList))
-			// for _, subscriber := range subManager.SubList {
-			// 	fmt.Printf("%s:%d\n", subscriber.Host, subscriber.Port)
+			fmt.Printf("\n")
+			fmt.Printf("Invoker Op -> Subscribe -> %s:%d subscribed to \"%s\"\n", host, port, dest)
+			fmt.Printf("Invoker Op -> Subscribe -> Lista de Subscribers (%d)\n", len(subManager.SubList))
+			for _, subscriber := range subManager.SubList {
+				fmt.Printf("%s:%d\n", subscriber.Host, subscriber.Port)
 
-			// 	for k, v := range subscriber.QueuesSubscribed {
-			// 		if v {
-			// 			fmt.Printf("\t%s\n", k)
-			// 		}
-			// 	}
-			// }
+				for k, v := range subscriber.QueuesSubscribed {
+					if v {
+						fmt.Printf("\t%s\n", k)
+					}
+				}
+			}
 
 		case "publishRequest":
 			// Publish to Queue
 			pubManager.PublishRequest(host, port, dest)
 
 			// // Logging Info
-			// fmt.Printf("\n")
-			// fmt.Printf("Invoker Op -> Publish Request -> %s:%d is now a publisher of \"%s\"\n", host, port, dest)
-			// fmt.Printf("Invoker Op -> Publish Request -> Lista de Publishers (%d)\n", len(pubManager.PubList))
-			// for _, publisher := range pubManager.PubList {
-			// 	fmt.Printf("%s:%d\n", publisher.Host, publisher.Port)
+			fmt.Printf("\n")
+			fmt.Printf("Invoker Op -> Publish Request -> %s:%d is now a publisher of \"%s\"\n", host, port, dest)
+			fmt.Printf("Invoker Op -> Publish Request -> Lista de Publishers (%d)\n", len(pubManager.PubList))
+			for _, publisher := range pubManager.PubList {
+				fmt.Printf("%s:%d\n", publisher.Host, publisher.Port)
 
-			// 	for k, v := range publisher.PublishQueues {
-			// 		if v {
-			// 			fmt.Printf("\t%s\n", k)
-			// 		}
-			// 	}
-			// }
+				for k, v := range publisher.PublishQueues {
+					if v {
+						fmt.Printf("\t%s\n", k)
+					}
+				}
+			}
 
 		case "publish":
 			//Check if Publisher is authorized

@@ -71,7 +71,7 @@ func SentAlert(alertQueueProxy queue.QueueManagerProxy, dangerRadChannel chan bo
 		validator := rad.Validator{IsDangerous: res, Timestamp: time.Now().UnixNano()}
 		alertQueueProxy.Send("publish", validator)
 
-		// fmt.Printf("\nIsDangerous: ")
-		// fmt.Println(res)
+		fmt.Printf("\nIsDangerous: ")
+		fmt.Println(res)
 	}
 }
