@@ -48,6 +48,9 @@ func GetRadiation(radChannel chan interface{}, dangerRadChannel chan bool) {
 		radiation := rad.Radiation{}
 		mapstructure.Decode(res, &radiation)
 
+		fmt.Printf("Estrutura Recebida: ")
+		fmt.Print(radiation)
+
 		value := radiation.Value
 
 		// Medindo o tempo
